@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Product, AddOn, SelectedAddOn } from '@/types';
 import { formatCurrency, storage } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, ShoppingCart } from 'lucide-react';
 
 interface ProductCardProps {
   product: Product;
@@ -55,75 +55,100 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <>
       <div
-        className="glass rounded-lg overflow-hidden card-hover cursor-pointer"
+        className="group relative glass rounded-xl overflow-hidden card-hover cursor-pointer border border-white/30 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
         onClick={() => setIsDialogOpen(true)}
       >
-        <div className="p-4 flex flex-col h-full">
-          <h3 className="font-medium mb-1">{product.name}</h3>
-          <p className="text-sm text-muted-foreground mb-2 flex-1">{product.description}</p>
-          <p className="text-lg font-semibold">{formatCurrency(product.price)}</p>
+        {/* Gradiente de fundo sutil */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 via-pink-50/20 to-white/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        
+        <div className="relative p-5 flex flex-col h-full">
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg mb-2 text-gray-800 group-hover:text-purple-700 transition-colors">
+              {product.name}
+            </h3>
+            <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
+              {product.description}
+            </p>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              {formatCurrency(product.price)}
+            </span>
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <ShoppingCart className="h-5 w-5 text-purple-600" />
+            </div>
+          </div>
         </div>
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md glass">
+        <DialogContent className="max-w-md glass border-white/30 shadow-2xl">
           <DialogHeader>
-            <DialogTitle>{product.name}</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-gray-800">{product.name}</DialogTitle>
           </DialogHeader>
 
           <div className="py-4 space-y-6">
-            <div>
-              <p className="text-sm text-muted-foreground">{product.description}</p>
-              <p className="text-lg font-semibold mt-2">{formatCurrency(product.price)}</p>
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-100">
+              <p className="text-sm text-gray-600 mb-3 leading-relaxed">{product.description}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500">Preço unitário:</span>
+                <span className="text-lg font-bold text-purple-600">{formatCurrency(product.price)}</span>
+              </div>
             </div>
 
             {allAddOns.length > 0 && (
               <div className="space-y-4">
-                <h4 className="text-sm font-medium">Adicionais</h4>
-                <div className="grid grid-cols-1 gap-3">
+                <h4 className="text-sm font-semibold text-gray-700 flex items-center">
+                  <Plus className="h-4 w-4 mr-1 text-purple-600" />
+                  Adicionais Disponíveis
+                </h4>
+                <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto">
                   {allAddOns.map((addon) => (
-                    <div key={addon.id} className="flex items-center space-x-2 rounded-md border p-2 bg-white/40">
+                    <div key={addon.id} className="flex items-center space-x-3 rounded-lg border border-purple-100 p-3 bg-white/60 hover:bg-purple-50/50 transition-colors">
                       <Checkbox
                         id={`addon-${addon.id}`}
                         checked={selectedAddOns.some((item) => item.id === addon.id)}
                         onCheckedChange={() => handleAddOnToggle(addon)}
+                        className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                       />
-                      <Label htmlFor={`addon-${addon.id}`} className="flex-1 cursor-pointer">
+                      <Label htmlFor={`addon-${addon.id}`} className="flex-1 cursor-pointer text-sm font-medium">
                         {addon.name}
                       </Label>
-                      <span className="text-sm font-medium">{formatCurrency(addon.price)}</span>
+                      <span className="text-sm font-semibold text-purple-600">{formatCurrency(addon.price)}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="observation">Observação</Label>
+            <div className="space-y-3">
+              <Label htmlFor="observation" className="text-sm font-semibold text-gray-700">Observações</Label>
               <Textarea
                 id="observation"
                 value={observation}
                 onChange={(e) => setObservation(e.target.value)}
-                placeholder="Alguma observação sobre este item?"
-                className="bg-white/40"
-                rows={2}
+                placeholder="Alguma observação especial para este item?"
+                className="bg-white/60 border-purple-100 focus:border-purple-400 focus:ring-purple-400 rounded-lg resize-none"
+                rows={3}
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Quantidade</Label>
-              <div className="flex items-center space-x-2">
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold text-gray-700">Quantidade</Label>
+              <div className="flex items-center justify-center space-x-4">
                 <Button
                   type="button"
                   variant="outline"
                   size="icon"
                   onClick={decrementQuantity}
                   disabled={quantity <= 1}
+                  className="h-10 w-10 rounded-full border-purple-200 hover:bg-purple-50"
                 >
                   <Minus className="h-4 w-4" />
                 </Button>
                 <Input
-                  className="w-16 text-center bg-white/40"
+                  className="w-20 text-center bg-white/60 border-purple-100 focus:border-purple-400 focus:ring-purple-400 rounded-lg font-semibold text-lg"
                   value={quantity}
                   onChange={(e) => {
                     const value = parseInt(e.target.value);
@@ -132,25 +157,47 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                     }
                   }}
                 />
-                <Button type="button" variant="outline" size="icon" onClick={incrementQuantity}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={incrementQuantity}
+                  className="h-10 w-10 rounded-full border-purple-200 hover:bg-purple-50"
+                >
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            <div className="pt-4 border-t">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-medium">Total:</span>
-                <span className="text-lg font-semibold">{formatCurrency(totalPrice)}</span>
+            <div className="pt-4 border-t border-purple-100">
+              <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg p-4 text-white">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-medium">Total do Item:</span>
+                  <span className="text-2xl font-bold">{formatCurrency(totalPrice)}</span>
+                </div>
+                {selectedAddOns.length > 0 && (
+                  <div className="text-sm opacity-90 mt-1">
+                    Inclui {selectedAddOns.length} adicional{selectedAddOns.length > 1 ? 'is' : ''}
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
           <DialogFooter className="sm:justify-between">
-            <Button type="button" variant="outline" onClick={handleDialogClose}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleDialogClose}
+              className="hover:bg-gray-50"
+            >
               Cancelar
             </Button>
-            <Button onClick={handleAddToCart} className="btn-primary">
+            <Button 
+              onClick={handleAddToCart} 
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg"
+            >
+              <ShoppingCart className="mr-2 h-4 w-4" />
               Adicionar ao Pedido
             </Button>
           </DialogFooter>

@@ -26,60 +26,96 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, onClose, sale }) => {
         printWindow.document.write('<html><head><title>Comprovante</title>');
         printWindow.document.write(`
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&display=swap');
+            
             body {
-              font-family: 'Courier', monospace;
+              font-family: 'Roboto Mono', 'Consolas', 'Monaco', 'Courier New', monospace;
               width: 79mm;
               margin: 0;
-              padding: 10px 0;
+              padding: 8px 0;
+              background: white;
+              color: #000;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
             }
             .receipt-content {
               width: 79mm;
-              padding: 0 5px;
+              padding: 0 4px;
+              line-height: 1.3;
             }
             .text-center { text-align: center; }
             .text-left { text-align: left; }
             .text-right { text-align: right; }
-            .bold { font-weight: bold; }
+            .bold { 
+              font-weight: 700; 
+              color: #000;
+            }
             .divider {
-              border-top: 1px dashed #000;
-              margin: 10px 0;
+              border-top: 2px dashed #000;
+              margin: 8px 0;
+              height: 0;
             }
             table {
               width: 100%;
               border-collapse: collapse;
+              margin: 0;
             }
             th, td {
               text-align: left;
-              padding: 2px 0;
+              padding: 1px 0;
               font-size: 12px;
-              line-height: 1.2;
+              line-height: 1.3;
+              color: #000;
+              font-weight: 500;
             }
             .item-quantity {
-              width: 30px;
+              width: 25px;
               text-align: center;
+              font-weight: 600;
             }
             .item-price {
-              width: 70px;
+              width: 60px;
               text-align: right;
+              font-weight: 600;
             }
             .addon-item {
-              padding-left: 10px;
+              padding-left: 8px;
               font-size: 11px;
+              font-weight: 500;
             }
             .observation {
               font-style: italic;
               font-size: 10px;
-              padding-left: 10px;
+              padding-left: 8px;
+              color: #333;
             }
             .footer {
-              margin-top: 10px;
+              margin-top: 8px;
               text-align: center;
               font-size: 10px;
+              font-weight: 600;
+              color: #000;
+            }
+            .header-info {
+              font-size: 11px;
+              font-weight: 500;
+              color: #000;
+            }
+            .total-section {
+              font-size: 13px;
+              font-weight: 700;
+              color: #000;
             }
             @media print {
               body {
                 font-size: 12px;
-                line-height: 1.2;
+                line-height: 1.3;
+                color: #000 !important;
+              }
+              * {
+                color: #000 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
               }
             }
           </style>
@@ -89,7 +125,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, onClose, sale }) => {
         // Cliente copy
         printWindow.document.write('<div class="receipt-content">');
         printWindow.document.write(receipt.innerHTML);
-        printWindow.document.write('<div class="footer">VIA DO CLIENTE</div>');
+        printWindow.document.write('<div class="footer">═══ VIA DO CLIENTE ═══</div>');
         printWindow.document.write('</div>');
         
         // Page break
@@ -98,7 +134,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, onClose, sale }) => {
         // Kitchen copy
         printWindow.document.write('<div class="receipt-content">');
         printWindow.document.write(receipt.innerHTML);
-        printWindow.document.write('<div class="footer">VIA DA PRODUÇÃO</div>');
+        printWindow.document.write('<div class="footer">═══ VIA DA PRODUÇÃO ═══</div>');
         printWindow.document.write('</div>');
         
         printWindow.document.write('</body></html>');
@@ -107,7 +143,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, onClose, sale }) => {
         setTimeout(() => {
           printWindow.print();
           printWindow.close();
-        }, 250);
+        }, 500);
       }
     }
   };
@@ -117,8 +153,10 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, onClose, sale }) => {
     
     try {
       const canvas = await html2canvas(receiptRef.current, {
-        scale: 2,
+        scale: 3,
         backgroundColor: '#ffffff',
+        useCORS: true,
+        logging: false,
       });
       
       const imgData = canvas.toDataURL('image/png');
@@ -147,23 +185,25 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, onClose, sale }) => {
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-md glass">
+      <DialogContent className="max-w-md glass border-white/30 shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="text-center text-lg font-semibold">Comprovante de Venda</DialogTitle>
+          <DialogTitle className="text-center text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Comprovante de Venda
+          </DialogTitle>
         </DialogHeader>
         
-        <div className="overflow-y-auto max-h-[400px] border rounded-md p-2 bg-white">
-          <div ref={receiptRef} className="print-content p-2">
+        <div className="overflow-y-auto max-h-[500px] border rounded-lg p-3 bg-white shadow-inner">
+          <div ref={receiptRef} className="print-content p-2" style={{ fontFamily: 'Roboto Mono, Consolas, Monaco, Courier New, monospace' }}>
             <div className="text-center">
-              <div className="bold">{storeSettings.name}</div>
-              <div>{storeSettings.address}</div>
-              <div>{storeSettings.phone}</div>
-              {storeSettings.instagram && <div>{storeSettings.instagram}</div>}
+              <div className="bold text-sm">{storeSettings.name}</div>
+              <div className="text-xs">{storeSettings.address}</div>
+              <div className="text-xs">{storeSettings.phone}</div>
+              {storeSettings.instagram && <div className="text-xs">{storeSettings.instagram}</div>}
             </div>
             
             <div className="divider"></div>
             
-            <div>
+            <div className="text-xs">
               <div><span className="bold">Cliente:</span> {sale.customerName}</div>
               <div><span className="bold">Data:</span> {formatDateTime(sale.createdAt)}</div>
               <div><span className="bold">Pagamento:</span> {getPaymentMethodName(sale.paymentMethod)}</div>
@@ -174,25 +214,25 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, onClose, sale }) => {
             <table>
               <thead>
                 <tr>
-                  <th>Qtd</th>
-                  <th>Item</th>
-                  <th className="text-right">Valor</th>
+                  <th className="text-xs bold">Qtd</th>
+                  <th className="text-xs bold">Item</th>
+                  <th className="text-right text-xs bold">Valor</th>
                 </tr>
               </thead>
               <tbody>
                 {sale.items.map((item) => (
                   <React.Fragment key={item.id}>
                     <tr>
-                      <td className="item-quantity">{item.quantity}x</td>
-                      <td>{item.productName}</td>
-                      <td className="item-price">{formatCurrency(item.price * item.quantity)}</td>
+                      <td className="item-quantity text-xs">{item.quantity}x</td>
+                      <td className="text-xs">{item.productName}</td>
+                      <td className="item-price text-xs">{formatCurrency(item.price * item.quantity)}</td>
                     </tr>
                     
                     {item.addOns.length > 0 && item.addOns.map((addon, index) => (
                       <tr key={`${item.id}-addon-${index}`}>
                         <td></td>
                         <td className="addon-item">+ {addon.name}</td>
-                        <td className="item-price">{formatCurrency(addon.price * item.quantity)}</td>
+                        <td className="item-price text-xs">{formatCurrency(addon.price * item.quantity)}</td>
                       </tr>
                     ))}
                     
@@ -208,36 +248,36 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, onClose, sale }) => {
             
             <div className="divider"></div>
             
-            <div className="text-right bold">
-              <div>TOTAL: {formatCurrency(sale.subtotal)}</div>
+            <div className="text-right">
+              <div className="bold text-sm">TOTAL: {formatCurrency(sale.subtotal)}</div>
               
               {sale.paymentMethod === 'cash' && sale.cashAmount !== undefined && (
                 <>
-                  <div>VALOR PAGO: {formatCurrency(sale.cashAmount)}</div>
-                  <div>TROCO: {formatCurrency(sale.change || 0)}</div>
+                  <div className="text-xs">VALOR PAGO: {formatCurrency(sale.cashAmount)}</div>
+                  <div className="text-xs">TROCO: {formatCurrency(sale.change || 0)}</div>
                 </>
               )}
             </div>
             
             <div className="divider"></div>
             
-            <div className="text-center">
+            <div className="text-center text-xs">
               <div>Obrigado pela preferência!</div>
-              <div>Pedido #{sale.id.substring(0, 6)}</div>
+              <div className="bold">Pedido #{sale.id.substring(0, 6)}</div>
             </div>
           </div>
         </div>
         
         <DialogFooter className="sm:justify-between">
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={onClose} className="hover:bg-gray-50">
             Fechar
           </Button>
           <div className="flex space-x-2">
-            <Button type="button" variant="outline" onClick={handleExportPDF}>
+            <Button type="button" variant="outline" onClick={handleExportPDF} className="hover:bg-blue-50">
               <FileText className="mr-2 h-4 w-4" />
               Salvar PDF
             </Button>
-            <Button type="button" className="btn-primary" onClick={handlePrint}>
+            <Button type="button" className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700" onClick={handlePrint}>
               <Printer className="mr-2 h-4 w-4" />
               Imprimir
             </Button>
