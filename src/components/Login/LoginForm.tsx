@@ -54,9 +54,9 @@ const LoginForm: React.FC = () => {
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <img 
-                  src="/logo.jpg" 
+                  src="/lovable-uploads/f02b49e9-b0fc-44fe-ac71-2116f14ccab8.png" 
                   alt="Açaízen SmartHUB" 
-                  className="h-28 w-auto rounded-xl shadow-lg hover:scale-105 transition-transform duration-300"
+                  className="h-32 w-auto rounded-xl shadow-lg hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = "https://via.placeholder.com/280x120/6B21A8/FFFFFF?text=A%C3%A7a%C3%ADzen+SmartHUB";
