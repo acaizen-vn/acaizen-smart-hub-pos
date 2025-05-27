@@ -1,5 +1,4 @@
-
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -15,8 +14,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, storage } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
+import { StoreSettings } from '@/types';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -27,6 +27,21 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { cart } = useCart();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
+    name: 'Açaízen SmartHUB',
+    phone: '',
+    address: '',
+    instagram: '',
+    facebook: '',
+    logoUrl: '',
+    systemTitle: '',
+  });
+
+  // Carregar configurações da loja
+  useEffect(() => {
+    const settings = storage.getStoreSettings();
+    setStoreSettings(settings);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -37,6 +52,10 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     navigate('/login');
     return null;
   }
+
+  // Determinar logo e nome a serem exibidos
+  const logoSrc = storeSettings.logoUrl || "/lovable-uploads/f02b49e9-b0fc-44fe-ac71-2116f14ccab8.png";
+  const storeName = storeSettings.name || 'Açaízen SmartHUB';
   
   const menuItems = [
     { 
@@ -77,8 +96,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <aside className="hidden md:flex flex-col w-64 glass shadow-md">
         <div className="flex justify-center p-4 border-b border-primary/10">
           <img 
-            src="/logo.jpg" 
-            alt="Açaízen SmartHUB" 
+            src={logoSrc}
+            alt={storeName}
             className="h-14 w-auto rounded-md"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -138,8 +157,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       >
         <div className="flex justify-between items-center p-4 border-b border-primary/10">
           <img 
-            src="/logo.jpg" 
-            alt="Açaízen SmartHUB" 
+            src={logoSrc}
+            alt={storeName}
             className="h-10 w-auto rounded-md"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
@@ -197,7 +216,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             <Menu className="h-5 w-5" />
           </button>
           <div className="ml-4 md:ml-0 flex-1">
-            <h1 className="text-xl font-medium">Açaízen SmartHUB</h1>
+            <h1 className="text-xl font-medium">{storeName}</h1>
           </div>
           <div className="flex items-center space-x-4">
             {window.location.pathname === '/' && (

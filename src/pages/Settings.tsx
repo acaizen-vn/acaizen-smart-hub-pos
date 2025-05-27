@@ -40,8 +40,13 @@ const SettingsPage = () => {
       storage.saveStoreSettings(settings);
       toast({
         title: 'Configurações salvas',
-        description: 'As configurações da loja foram salvas com sucesso.',
+        description: 'As configurações da loja foram salvas com sucesso. A página será recarregada para aplicar as alterações.',
       });
+      
+      // Recarregar a página depois de um pequeno delay para aplicar as mudanças
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
       toast({
@@ -276,7 +281,7 @@ const SettingsPage = () => {
               <CardHeader>
                 <CardTitle>Dados da Loja</CardTitle>
                 <CardDescription>
-                  Configure as informações da sua loja que aparecerão nos comprovantes e na tela de login.
+                  Configure as informações da sua loja que aparecerão nos comprovantes, na tela de login e em todo o sistema.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -302,7 +307,7 @@ const SettingsPage = () => {
                         className="bg-white/40"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Formatos aceitos: PNG, JPG, JPEG. Tamanho máximo: 2MB
+                        Formatos aceitos: PNG, JPG, JPEG. Tamanho máximo: 2MB. Esta logo aparecerá na tela de login e em todo o sistema.
                       </p>
                     </div>
                   </div>
@@ -323,7 +328,7 @@ const SettingsPage = () => {
                   </p>
                 </div>
 
-                {/* Existing fields */}
+                {/* Store Name */}
                 <div className="space-y-2">
                   <Label htmlFor="store-name">Nome da Loja</Label>
                   <Input
@@ -333,6 +338,9 @@ const SettingsPage = () => {
                     placeholder="Nome da sua loja"
                     className="bg-white/40"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Este nome aparecerá em todo o sistema, incluindo o cabeçalho e comprovantes
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
@@ -432,7 +440,6 @@ const SettingsPage = () => {
         </Tabs>
       </div>
       
-      {/* Dialog para backup/restauração */}
       <Dialog open={isBackupDialogOpen} onOpenChange={setIsBackupDialogOpen}>
         <DialogContent className="max-w-md glass">
           <DialogHeader>
