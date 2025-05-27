@@ -1,19 +1,35 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { initializeDefaultData } from '@/lib/utils';
+import { initializeDefaultData, storage } from '@/lib/utils';
+import { StoreSettings } from '@/types';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
+    name: 'Açaízen SmartHUB',
+    phone: '',
+    address: '',
+    instagram: '',
+    facebook: '',
+    logoUrl: '',
+    systemTitle: '',
+  });
+  
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Carregar configurações da loja
+  useEffect(() => {
+    const settings = storage.getStoreSettings();
+    setStoreSettings(settings);
+  }, []);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,10 +37,8 @@ const LoginForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      // Inicializar dados padrão se for a primeira execução
       initializeDefaultData();
       
-      // Tentar fazer login
       const success = await login(email, password);
       
       if (success) {
@@ -39,6 +53,10 @@ const LoginForm: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  // Determinar logo e título a serem exibidos
+  const logoSrc = storeSettings.logoUrl || "/lovable-uploads/f02b49e9-b0fc-44fe-ac71-2116f14ccab8.png";
+  const systemTitle = storeSettings.systemTitle || `Bem-vindo ao ${storeSettings.name}`;
   
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-purple-50 via-pink-50 to-white">
@@ -54,19 +72,19 @@ const LoginForm: React.FC = () => {
             <div className="flex justify-center mb-6">
               <div className="relative">
                 <img 
-                  src="/lovable-uploads/f02b49e9-b0fc-44fe-ac71-2116f14ccab8.png" 
-                  alt="Açaízen SmartHUB" 
+                  src={logoSrc}
+                  alt={storeSettings.name} 
                   className="h-32 w-auto rounded-xl shadow-lg hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = "https://via.placeholder.com/280x120/6B21A8/FFFFFF?text=A%C3%A7a%C3%ADzen+SmartHUB";
+                    target.src = "https://via.placeholder.com/280x120/6B21A8/FFFFFF?text=Açaízen+SmartHUB";
                   }}
                 />
                 <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-25"></div>
               </div>
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
-              Bem-vindo ao Açaízen SmartHUB
+              {systemTitle}
             </h1>
             <p className="text-muted-foreground">Faça login para acessar o sistema de vendas</p>
           </div>

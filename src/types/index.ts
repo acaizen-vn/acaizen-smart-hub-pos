@@ -1,4 +1,3 @@
-
 // Tipos para autenticação
 export interface User {
   id: string;
@@ -87,4 +86,6 @@ export interface StoreSettings {
   address: string;
   instagram: string;
   facebook: string;
+  logoUrl?: string;
+  systemTitle?: string;
 }

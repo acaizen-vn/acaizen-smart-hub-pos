@@ -1,4 +1,3 @@
-
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Cart, CartItem, Sale, StoreSettings, User } from "@/types";
@@ -97,7 +96,7 @@ export const storage = {
     localStorage.setItem('sales', JSON.stringify(sales));
   },
   
-  // Função para configurações da loja
+  // Configurações da loja atualizadas
   getStoreSettings: (): StoreSettings => {
     const settings = localStorage.getItem('storeSettings');
     return settings ? JSON.parse(settings) : {
@@ -105,7 +104,9 @@ export const storage = {
       phone: '(00) 00000-0000',
       address: 'Av. Exemplo, 123 - Cidade, UF',
       instagram: '@acaizen',
-      facebook: 'facebook.com/acaizen'
+      facebook: 'facebook.com/acaizen',
+      logoUrl: '',
+      systemTitle: ''
     };
   },
   saveStoreSettings: (settings: StoreSettings) => {
@@ -317,6 +318,8 @@ export function initializeDefaultData() {
       address: 'Av. Exemplo, 123 - Cidade, UF',
       instagram: '@acaizen',
       facebook: 'facebook.com/acaizen',
+      logoUrl: '',
+      systemTitle: ''
     };
     storage.saveStoreSettings(defaultSettings);
   }

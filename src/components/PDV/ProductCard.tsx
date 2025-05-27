@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [selectedAddOns, setSelectedAddOns] = useState<SelectedAddOn[]>([]);
   const [observation, setObservation] = useState('');
 
-  const allAddOns = storage.getAddOns().filter((addon: AddOn) => addon.active);
+  // Verificar se o produto deve mostrar adicionais (açaí ou sorvete)
+  const shouldShowAddOns = () => {
+    const productNameLower = product.name.toLowerCase();
+    return productNameLower.includes('açaí') || productNameLower.includes('acai') || 
+           productNameLower.includes('sorvete') || productNameLower.includes('ice cream');
+  };
+
+  const allAddOns = shouldShowAddOns() ? storage.getAddOns().filter((addon: AddOn) => addon.active) : [];
 
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedAddOns, observation);

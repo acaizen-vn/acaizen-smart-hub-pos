@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { StoreSettings } from '@/types';
 import { storage } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
-import { Save, Download, Upload, Printer, Store, Database, FileJson } from 'lucide-react';
+import { Save, Download, Upload, Printer, Store, Database, FileJson, ImageIcon } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 
 const SettingsPage = () => {
@@ -20,6 +19,8 @@ const SettingsPage = () => {
     address: '',
     instagram: '',
     facebook: '',
+    logoUrl: '',
+    systemTitle: '',
   });
   
   const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
@@ -59,6 +60,46 @@ const SettingsPage = () => {
       ...settings,
       [field]: e.target.value,
     });
+  };
+  
+  // Nova função para upload de logo
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Verificar se é uma imagem
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Arquivo inválido',
+          description: 'Por favor, selecione apenas arquivos de imagem (PNG, JPG, JPEG).',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Verificar tamanho do arquivo (máximo 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: 'Arquivo muito grande',
+          description: 'Por favor, selecione uma imagem com menos de 2MB.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const result = event.target?.result as string;
+        setSettings({
+          ...settings,
+          logoUrl: result,
+        });
+        toast({
+          title: 'Logo carregada',
+          description: 'A logo foi carregada com sucesso. Lembre-se de salvar as configurações.',
+        });
+      };
+      reader.readAsDataURL(file);
+    }
   };
   
   const openExportDialog = () => {
@@ -235,10 +276,54 @@ const SettingsPage = () => {
               <CardHeader>
                 <CardTitle>Dados da Loja</CardTitle>
                 <CardDescription>
-                  Configure as informações da sua loja que aparecerão nos comprovantes.
+                  Configure as informações da sua loja que aparecerão nos comprovantes e na tela de login.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
+                {/* Logo Upload */}
+                <div className="space-y-4">
+                  <Label htmlFor="logo-upload">Logo da Loja</Label>
+                  <div className="flex items-center space-x-4">
+                    {settings.logoUrl && (
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={settings.logoUrl} 
+                          alt="Logo atual" 
+                          className="h-16 w-auto rounded-lg border border-gray-200 object-contain"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <Input
+                        id="logo-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="bg-white/40"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Formatos aceitos: PNG, JPG, JPEG. Tamanho máximo: 2MB
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* System Title */}
+                <div className="space-y-2">
+                  <Label htmlFor="system-title">Título do Sistema</Label>
+                  <Input
+                    id="system-title"
+                    value={settings.systemTitle || ''}
+                    onChange={(e) => handleInputChange(e, 'systemTitle')}
+                    placeholder="Ex: Bem-vindo ao Sistema de Vendas"
+                    className="bg-white/40"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Aparecerá abaixo da logo na tela de login
+                  </p>
+                </div>
+
+                {/* Existing fields */}
                 <div className="space-y-2">
                   <Label htmlFor="store-name">Nome da Loja</Label>
                   <Input
