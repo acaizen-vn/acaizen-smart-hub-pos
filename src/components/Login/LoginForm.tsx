@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,15 +13,7 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
-    name: 'Açaízen SmartHUB',
-    phone: '',
-    address: '',
-    instagram: '',
-    facebook: '',
-    logoUrl: '',
-    systemTitle: '',
-  });
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>(() => storage.getStoreSettings());
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -87,6 +80,15 @@ const LoginForm: React.FC = () => {
               {systemTitle}
             </h1>
             <p className="text-muted-foreground">Faça login para acessar o sistema de vendas</p>
+          </div>
+          
+          {/* Informações de login para o usuário */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h3 className="font-semibold text-blue-800 mb-2">Dados de Acesso:</h3>
+            <div className="text-sm text-blue-700">
+              <p><strong>Email:</strong> pdvzen1@gmail.com</p>
+              <p><strong>Senha:</strong> Zen2024</p>
+            </div>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-6">

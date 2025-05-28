@@ -27,15 +27,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const { cart } = useCart();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [storeSettings, setStoreSettings] = useState<StoreSettings>({
-    name: 'Açaízen SmartHUB',
-    phone: '',
-    address: '',
-    instagram: '',
-    facebook: '',
-    logoUrl: '',
-    systemTitle: '',
-  });
+  const [storeSettings, setStoreSettings] = useState<StoreSettings>(() => storage.getStoreSettings());
 
   // Carregar configurações da loja
   useEffect(() => {

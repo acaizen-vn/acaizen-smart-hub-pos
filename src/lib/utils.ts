@@ -1,6 +1,7 @@
+
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { Cart, CartItem, Sale, StoreSettings, User } from "@/types";
+import { Cart, CartItem, Sale, StoreSettings, User, PaymentGateway, WhatsAppSettings, PrintSettings } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -32,6 +33,23 @@ export function formatDate(date: string): string {
 export function formatDateTime(date: string): string {
   return new Date(date).toLocaleString('pt-BR');
 }
+
+// Configurações padrão para WhatsApp
+const defaultWhatsAppSettings: WhatsAppSettings = {
+  enabled: false,
+  connected: false,
+  botEnabled: false,
+  welcomeMessage: 'Olá! Bem-vindo ao nosso atendimento.',
+  autoReply: false,
+  phoneNumber: ''
+};
+
+// Configurações padrão para impressão
+const defaultPrintSettings: PrintSettings = {
+  autoprint: false,
+  paperSize: '80mm',
+  copies: 1
+};
 
 // Gerencia salvamento e carregamento do localStorage
 export const storage = {
@@ -106,7 +124,10 @@ export const storage = {
       instagram: '@acaizen',
       facebook: 'facebook.com/acaizen',
       logoUrl: '',
-      systemTitle: ''
+      systemTitle: '',
+      paymentGateways: [],
+      whatsapp: defaultWhatsAppSettings,
+      print: defaultPrintSettings
     };
   },
   saveStoreSettings: (settings: StoreSettings) => {
@@ -310,8 +331,8 @@ export function initializeDefaultData() {
   
   // Verificar se já existem configurações da loja
   const storeSettings = storage.getStoreSettings();
-  if (!storeSettings.name || storeSettings.name === 'Açaízen SmartHUB') {
-    // Criar configurações padrão
+  if (!storeSettings.paymentGateways || !storeSettings.whatsapp || !storeSettings.print) {
+    // Criar configurações padrão completas
     const defaultSettings: StoreSettings = {
       name: 'Açaízen SmartHUB',
       phone: '(00) 00000-0000',
@@ -319,7 +340,10 @@ export function initializeDefaultData() {
       instagram: '@acaizen',
       facebook: 'facebook.com/acaizen',
       logoUrl: '',
-      systemTitle: ''
+      systemTitle: '',
+      paymentGateways: [],
+      whatsapp: defaultWhatsAppSettings,
+      print: defaultPrintSettings
     };
     storage.saveStoreSettings(defaultSettings);
   }
