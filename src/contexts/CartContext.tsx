@@ -1,17 +1,16 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Cart, CartItem, SelectedAddOn, Product, AddOn, Sale, PaymentMethod } from '@/types';
+import { Cart, CartItem, SelectedAddOn, SelectedAcaiAddOn, Product, AddOn, Sale, PaymentMethod } from '@/types';
 import { generateId, storage } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from './AuthContext';
 
 interface CartContextType {
   cart: Cart;
-  addToCart: (product: Product, quantity: number, addOns: SelectedAddOn[], observation: string) => void;
+  addToCart: (product: Product, quantity: number, addOns: SelectedAddOn[], observation: string, acaiAddOns?: SelectedAcaiAddOn[]) => void;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
-  finalizeSale: (customerName: string, paymentMethod: PaymentMethod, cashAmount?: number) => Promise<Sale | null>;
+  finalizeSale: (customerName: string, paymentMethod: PaymentMethod, cashAmount?: number, pixQrCode?: string) => Promise<Sale | null>;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -33,9 +32,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   }, [cart]);
   
   // Calcular o subtotal de um item
-  const calculateItemSubtotal = (price: number, quantity: number, addOns: SelectedAddOn[]): number => {
+  const calculateItemSubtotal = (
+    price: number, 
+    quantity: number, 
+    addOns: SelectedAddOn[], 
+    acaiAddOns?: SelectedAcaiAddOn[]
+  ): number => {
     const addOnsTotal = addOns.reduce((sum, addon) => sum + addon.price, 0);
-    return (price + addOnsTotal) * quantity;
+    const acaiAddOnsTotal = acaiAddOns?.reduce((sum, addon) => sum + addon.price, 0) || 0;
+    return (price + addOnsTotal + acaiAddOnsTotal) * quantity;
   };
   
   // Adicionar um produto ao carrinho
@@ -43,7 +48,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     product: Product,
     quantity: number,
     addOns: SelectedAddOn[],
-    observation: string
+    observation: string,
+    acaiAddOns?: SelectedAcaiAddOn[]
   ) => {
     if (quantity <= 0) {
       toast({
@@ -54,7 +60,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     
-    const itemSubtotal = calculateItemSubtotal(product.price, quantity, addOns);
+    const itemSubtotal = calculateItemSubtotal(product.price, quantity, addOns, acaiAddOns);
     
     const newItem: CartItem = {
       id: generateId(),
@@ -63,6 +69,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       price: product.price,
       quantity,
       addOns,
+      acaiAddOns,
       observation,
       subtotal: itemSubtotal,
     };
@@ -130,7 +137,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const oldSubtotal = item.subtotal;
       
       const addOnsTotal = item.addOns.reduce((sum, addon) => sum + addon.price, 0);
-      const newSubtotal = (item.price + addOnsTotal) * quantity;
+      const acaiAddOnsTotal = item.acaiAddOns?.reduce((sum, addon) => sum + addon.price, 0) || 0;
+      const newSubtotal = (item.price + addOnsTotal + acaiAddOnsTotal) * quantity;
       
       const updatedItems = [...prevCart.items];
       updatedItems[itemIndex] = {
@@ -159,7 +167,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const finalizeSale = async (
     customerName: string,
     paymentMethod: PaymentMethod,
-    cashAmount?: number
+    cashAmount?: number,
+    pixQrCode?: string
   ): Promise<Sale | null> => {
     try {
       if (cart.items.length === 0) {
@@ -206,6 +215,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         subtotal: cart.subtotal,
         cashAmount,
         change,
+        pixQrCode,
         createdAt: new Date().toISOString(),
         createdBy: authState.user?.id || 'unknown',
       };

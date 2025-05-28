@@ -1,3 +1,4 @@
+
 // Tipos para autenticação
 export interface User {
   id: string;
@@ -42,6 +43,24 @@ export interface AddOn {
   createdAt: string;
 }
 
+// Novos tipos para categorias específicas do açaí
+export interface AcaiCategory {
+  id: string;
+  name: string;
+  type: 'caldas' | 'complementos' | 'adicionais';
+  active: boolean;
+  createdAt: string;
+}
+
+export interface AcaiAddOn {
+  id: string;
+  name: string;
+  price: number;
+  categoryType: 'caldas' | 'complementos' | 'adicionais';
+  active: boolean;
+  createdAt: string;
+}
+
 // Tipos para carrinho e vendas
 export interface CartItem {
   id: string;
@@ -50,6 +69,7 @@ export interface CartItem {
   price: number;
   quantity: number;
   addOns: SelectedAddOn[];
+  acaiAddOns?: SelectedAcaiAddOn[];
   observation: string;
   subtotal: number;
 }
@@ -58,6 +78,13 @@ export interface SelectedAddOn {
   id: string;
   name: string;
   price: number;
+}
+
+export interface SelectedAcaiAddOn {
+  id: string;
+  name: string;
+  price: number;
+  categoryType: 'caldas' | 'complementos' | 'adicionais';
 }
 
 export interface Cart {
@@ -76,8 +103,39 @@ export interface Sale {
   subtotal: number;
   cashAmount?: number; // Valor recebido em dinheiro
   change?: number; // Troco
+  pixQrCode?: string; // QR Code do Pix
   createdAt: string;
   createdBy: string; // ID do usuário que realizou a venda
+}
+
+// Novos tipos para gateways de pagamento
+export interface PaymentGateway {
+  id: string;
+  name: string;
+  active: boolean;
+  apiKey: string;
+  apiSecret?: string;
+  environment: 'sandbox' | 'production';
+  type: 'mercadopago' | 'pagseguro' | 'stripe' | 'paypal';
+}
+
+// Tipos para WhatsApp
+export interface WhatsAppSettings {
+  enabled: boolean;
+  qrCode?: string;
+  connected: boolean;
+  botEnabled: boolean;
+  welcomeMessage: string;
+  autoReply: boolean;
+  phoneNumber: string;
+}
+
+// Tipos para configurações de impressão
+export interface PrintSettings {
+  autoprint: boolean;
+  printerName?: string;
+  paperSize: '58mm' | '80mm';
+  copies: number;
 }
 
 export interface StoreSettings {
@@ -88,4 +146,7 @@ export interface StoreSettings {
   facebook: string;
   logoUrl?: string;
   systemTitle?: string;
+  paymentGateways: PaymentGateway[];
+  whatsapp: WhatsAppSettings;
+  print: PrintSettings;
 }

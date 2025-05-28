@@ -1,5 +1,5 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
@@ -18,7 +18,18 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, onClose, sale }) => {
   const receiptRef = useRef<HTMLDivElement>(null);
   const storeSettings = storage.getStoreSettings();
 
-  const handlePrint = () => {
+  // Impressão automática quando o modal abre
+  useEffect(() => {
+    if (open && storeSettings.print?.autoprint) {
+      const timer = setTimeout(() => {
+        handleAutoPrint();
+      }, 1000); // Aguardar 1 segundo para garantir que o modal esteja renderizado
+      
+      return () => clearTimeout(timer);
+    }
+  }, [open, storeSettings.print?.autoprint]);
+
+  const handleAutoPrint = () => {
     const receipt = receiptRef.current;
     if (receipt) {
       const printWindow = window.open('', '', 'height=800,width=800');
@@ -148,6 +159,10 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, onClose, sale }) => {
     }
   };
 
+  const handlePrint = () => {
+    handleAutoPrint();
+  };
+
   const handleExportPDF = async () => {
     if (!receiptRef.current) return;
     
@@ -230,6 +245,14 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ open, onClose, sale }) => {
                     
                     {item.addOns.length > 0 && item.addOns.map((addon, index) => (
                       <tr key={`${item.id}-addon-${index}`}>
+                        <td></td>
+                        <td className="addon-item">+ {addon.name}</td>
+                        <td className="item-price text-xs">{formatCurrency(addon.price * item.quantity)}</td>
+                      </tr>
+                    ))}
+
+                    {item.acaiAddOns && item.acaiAddOns.length > 0 && item.acaiAddOns.map((addon, index) => (
+                      <tr key={`${item.id}-acai-addon-${index}`}>
                         <td></td>
                         <td className="addon-item">+ {addon.name}</td>
                         <td className="item-price text-xs">{formatCurrency(addon.price * item.quantity)}</td>

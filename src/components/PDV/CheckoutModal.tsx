@@ -9,6 +9,7 @@ import { PaymentMethod, Sale } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { X } from 'lucide-react';
+import PixQRCode from './PixQRCode';
 
 interface CheckoutModalProps {
   open: boolean;
@@ -21,6 +22,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ open, onClose, onFinalize
   const [customerName, setCustomerName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [cashAmount, setCashAmount] = useState<string>('');
+  const [pixQrCode, setPixQrCode] = useState<string>('');
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +30,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ open, onClose, onFinalize
     const sale = await finalizeSale(
       customerName,
       paymentMethod,
-      paymentMethod === 'cash' ? parseFloat(cashAmount) : undefined
+      paymentMethod === 'cash' ? parseFloat(cashAmount) : undefined,
+      paymentMethod === 'pix' ? pixQrCode : undefined
     );
     
     if (sale) {
@@ -42,7 +45,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ open, onClose, onFinalize
   
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-md glass">
+      <DialogContent className="max-w-lg glass max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-lg font-semibold">Finalizar Venda</DialogTitle>
         </DialogHeader>
@@ -107,6 +110,25 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ open, onClose, onFinalize
                     <p className="text-sm font-medium text-green-800">Troco: {formatCurrency(change)}</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {paymentMethod === 'pix' && (
+              <div className="space-y-4">
+                <div className="bg-white/60 rounded-lg border border-purple-100">
+                  <PixQRCode 
+                    amount={cart.subtotal}
+                    onQRCodeGenerated={setPixQrCode}
+                  />
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Aguardando confirmação do pagamento...
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Após o pagamento, clique em "Finalizar Venda"
+                  </p>
+                </div>
               </div>
             )}
             

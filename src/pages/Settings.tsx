@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { StoreSettings } from '@/types';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { StoreSettings, PaymentGateway, WhatsAppSettings, PrintSettings } from '@/types';
 import { storage } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
-import { Save, Download, Upload, Printer, Store, Database, FileJson, ImageIcon } from 'lucide-react';
+import { Save, Download, Upload, Printer, Store, Database, FileJson, CreditCard, MessageCircle, Settings as SettingsIcon } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 
 const SettingsPage = () => {
@@ -21,6 +23,20 @@ const SettingsPage = () => {
     facebook: '',
     logoUrl: '',
     systemTitle: '',
+    paymentGateways: [],
+    whatsapp: {
+      enabled: false,
+      connected: false,
+      botEnabled: false,
+      welcomeMessage: 'Olá! Como posso ajudá-lo?',
+      autoReply: false,
+      phoneNumber: '',
+    },
+    print: {
+      autoprint: true,
+      paperSize: '80mm',
+      copies: 2,
+    },
   });
   
   const [isBackupDialogOpen, setIsBackupDialogOpen] = useState(false);
@@ -32,7 +48,7 @@ const SettingsPage = () => {
   // Carregar configurações do localStorage
   useEffect(() => {
     const storedSettings = storage.getStoreSettings();
-    setSettings(storedSettings);
+    setSettings(prev => ({ ...prev, ...storedSettings }));
   }, []);
   
   const saveSettings = () => {
@@ -40,7 +56,7 @@ const SettingsPage = () => {
       storage.saveStoreSettings(settings);
       toast({
         title: 'Configurações salvas',
-        description: 'As configurações da loja foram salvas com sucesso. A página será recarregada para aplicar as alterações.',
+        description: 'As configurações foram salvas com sucesso. A página será recarregada para aplicar as alterações.',
       });
       
       // Recarregar a página depois de um pequeno delay para aplicar as mudanças
@@ -51,7 +67,7 @@ const SettingsPage = () => {
       console.error('Erro ao salvar configurações:', error);
       toast({
         title: 'Erro ao salvar',
-        description: 'Não foi possível salvar as configurações da loja.',
+        description: 'Não foi possível salvar as configurações.',
         variant: 'destructive',
       });
     }
@@ -66,12 +82,50 @@ const SettingsPage = () => {
       [field]: e.target.value,
     });
   };
+
+  const handlePaymentGatewayChange = (index: number, field: keyof PaymentGateway, value: any) => {
+    const updatedGateways = [...settings.paymentGateways];
+    updatedGateways[index] = { ...updatedGateways[index], [field]: value };
+    setSettings({ ...settings, paymentGateways: updatedGateways });
+  };
+
+  const addPaymentGateway = () => {
+    const newGateway: PaymentGateway = {
+      id: Date.now().toString(),
+      name: 'Novo Gateway',
+      active: false,
+      apiKey: '',
+      environment: 'sandbox',
+      type: 'mercadopago',
+    };
+    setSettings({
+      ...settings,
+      paymentGateways: [...settings.paymentGateways, newGateway],
+    });
+  };
+
+  const removePaymentGateway = (index: number) => {
+    const updatedGateways = settings.paymentGateways.filter((_, i) => i !== index);
+    setSettings({ ...settings, paymentGateways: updatedGateways });
+  };
+
+  const handleWhatsAppChange = (field: keyof WhatsAppSettings, value: any) => {
+    setSettings({
+      ...settings,
+      whatsapp: { ...settings.whatsapp, [field]: value },
+    });
+  };
+
+  const handlePrintChange = (field: keyof PrintSettings, value: any) => {
+    setSettings({
+      ...settings,
+      print: { ...settings.print, [field]: value },
+    });
+  };
   
-  // Nova função para upload de logo
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Verificar se é uma imagem
       if (!file.type.startsWith('image/')) {
         toast({
           title: 'Arquivo inválido',
@@ -81,7 +135,6 @@ const SettingsPage = () => {
         return;
       }
 
-      // Verificar tamanho do arquivo (máximo 2MB)
       if (file.size > 2 * 1024 * 1024) {
         toast({
           title: 'Arquivo muito grande',
@@ -106,7 +159,7 @@ const SettingsPage = () => {
       reader.readAsDataURL(file);
     }
   };
-  
+
   const openExportDialog = () => {
     const data = storage.exportData();
     setBackupData(data);
@@ -140,7 +193,6 @@ const SettingsPage = () => {
           description: 'Os dados foram importados com sucesso. A página será recarregada.',
         });
         
-        // Recarregar a página depois de um pequeno delay
         setTimeout(() => {
           window.location.reload();
         }, 1500);
@@ -265,13 +317,25 @@ const SettingsPage = () => {
         </div>
         
         <Tabs defaultValue="store" className="glass rounded-lg p-6">
-          <TabsList className="grid grid-cols-2 mb-6">
-            <TabsTrigger value="store" className="flex items-center">
-              <Store className="h-4 w-4 mr-2" />
-              Dados da Loja
+          <TabsList className="grid grid-cols-5 mb-6">
+            <TabsTrigger value="store" className="flex items-center text-xs">
+              <Store className="h-4 w-4 mr-1" />
+              Loja
             </TabsTrigger>
-            <TabsTrigger value="system" className="flex items-center">
-              <Database className="h-4 w-4 mr-2" />
+            <TabsTrigger value="payments" className="flex items-center text-xs">
+              <CreditCard className="h-4 w-4 mr-1" />
+              Pagamentos
+            </TabsTrigger>
+            <TabsTrigger value="whatsapp" className="flex items-center text-xs">
+              <MessageCircle className="h-4 w-4 mr-1" />
+              WhatsApp
+            </TabsTrigger>
+            <TabsTrigger value="print" className="flex items-center text-xs">
+              <Printer className="h-4 w-4 mr-1" />
+              Impressão
+            </TabsTrigger>
+            <TabsTrigger value="system" className="flex items-center text-xs">
+              <Database className="h-4 w-4 mr-1" />
               Sistema
             </TabsTrigger>
           </TabsList>
@@ -399,6 +463,269 @@ const SettingsPage = () => {
                 <Button onClick={saveSettings} className="btn-primary">
                   <Save className="h-4 w-4 mr-2" />
                   Salvar
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="payments">
+            <Card>
+              <CardHeader>
+                <CardTitle>Gateways de Pagamento</CardTitle>
+                <CardDescription>
+                  Configure os gateways de pagamento para aceitar Pix, cartões e outros métodos.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {settings.paymentGateways.map((gateway, index) => (
+                  <div key={gateway.id} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Input
+                        value={gateway.name}
+                        onChange={(e) => handlePaymentGatewayChange(index, 'name', e.target.value)}
+                        placeholder="Nome do Gateway"
+                        className="bg-white/40"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => removePaymentGateway(index)}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Tipo</Label>
+                        <Select
+                          value={gateway.type}
+                          onValueChange={(value) => handlePaymentGatewayChange(index, 'type', value)}
+                        >
+                          <SelectTrigger className="bg-white/40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="mercadopago">Mercado Pago</SelectItem>
+                            <SelectItem value="pagseguro">PagSeguro</SelectItem>
+                            <SelectItem value="stripe">Stripe</SelectItem>
+                            <SelectItem value="paypal">PayPal</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div>
+                        <Label>Ambiente</Label>
+                        <Select
+                          value={gateway.environment}
+                          onValueChange={(value) => handlePaymentGatewayChange(index, 'environment', value)}
+                        >
+                          <SelectTrigger className="bg-white/40">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="sandbox">Sandbox (Teste)</SelectItem>
+                            <SelectItem value="production">Produção</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label>API Key</Label>
+                      <Input
+                        type="password"
+                        value={gateway.apiKey}
+                        onChange={(e) => handlePaymentGatewayChange(index, 'apiKey', e.target.value)}
+                        placeholder="Sua API Key"
+                        className="bg-white/40"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        checked={gateway.active}
+                        onCheckedChange={(checked) => handlePaymentGatewayChange(index, 'active', checked)}
+                      />
+                      <Label>Gateway ativo</Label>
+                    </div>
+                  </div>
+                ))}
+                
+                <Button onClick={addPaymentGateway} variant="outline" className="w-full">
+                  Adicionar Gateway de Pagamento
+                </Button>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={saveSettings} className="btn-primary">
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar Configurações
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="whatsapp">
+            <Card>
+              <CardHeader>
+                <CardTitle>WhatsApp Business</CardTitle>
+                <CardDescription>
+                  Configure a integração com WhatsApp para atendimento automatizado.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={settings.whatsapp.enabled}
+                    onCheckedChange={(checked) => handleWhatsAppChange('enabled', checked)}
+                  />
+                  <Label>Ativar WhatsApp</Label>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Número do WhatsApp</Label>
+                  <Input
+                    value={settings.whatsapp.phoneNumber}
+                    onChange={(e) => handleWhatsAppChange('phoneNumber', e.target.value)}
+                    placeholder="5511999999999"
+                    className="bg-white/40"
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={settings.whatsapp.botEnabled}
+                    onCheckedChange={(checked) => handleWhatsAppChange('botEnabled', checked)}
+                  />
+                  <Label>Ativar Bot de Atendimento</Label>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Mensagem de Boas-vindas</Label>
+                  <Textarea
+                    value={settings.whatsapp.welcomeMessage}
+                    onChange={(e) => handleWhatsAppChange('welcomeMessage', e.target.value)}
+                    placeholder="Mensagem automática de boas-vindas"
+                    className="bg-white/40"
+                    rows={3}
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={settings.whatsapp.autoReply}
+                    onCheckedChange={(checked) => handleWhatsAppChange('autoReply', checked)}
+                  />
+                  <Label>Resposta Automática</Label>
+                </div>
+                
+                {settings.whatsapp.enabled && (
+                  <div className="border rounded-lg p-4 bg-blue-50">
+                    <h4 className="font-medium mb-2">Status da Conexão</h4>
+                    <p className="text-sm text-gray-600 mb-4">
+                      {settings.whatsapp.connected 
+                        ? '✅ WhatsApp conectado e funcionando' 
+                        : '❌ WhatsApp não conectado - Escaneie o QR Code'}
+                    </p>
+                    
+                    {!settings.whatsapp.connected && (
+                      <div className="text-center">
+                        <div className="bg-white p-4 rounded border inline-block">
+                          <p className="text-sm mb-2">QR Code aparecerá aqui</p>
+                          <div className="w-32 h-32 bg-gray-200 rounded"></div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Escaneie com o WhatsApp do seu celular
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter>
+                <Button onClick={saveSettings} className="btn-primary">
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar Configurações
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="print">
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurações de Impressão</CardTitle>
+                <CardDescription>
+                  Configure como os comprovantes serão impressos.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={settings.print.autoprint}
+                    onCheckedChange={(checked) => handlePrintChange('autoprint', checked)}
+                  />
+                  <Label>Impressão Automática</Label>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Tamanho do Papel</Label>
+                  <Select
+                    value={settings.print.paperSize}
+                    onValueChange={(value) => handlePrintChange('paperSize', value)}
+                  >
+                    <SelectTrigger className="bg-white/40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="58mm">58mm</SelectItem>
+                      <SelectItem value="80mm">80mm</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Número de Cópias</Label>
+                  <Select
+                    value={settings.print.copies.toString()}
+                    onValueChange={(value) => handlePrintChange('copies', parseInt(value))}
+                  >
+                    <SelectTrigger className="bg-white/40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 via (Cliente)</SelectItem>
+                      <SelectItem value="2">2 vias (Cliente + Produção)</SelectItem>
+                      <SelectItem value="3">3 vias (Cliente + Produção + Arquivo)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Nome da Impressora (Opcional)</Label>
+                  <Input
+                    value={settings.print.printerName || ''}
+                    onChange={(e) => handlePrintChange('printerName', e.target.value)}
+                    placeholder="Ex: POS-80"
+                    className="bg-white/40"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Deixe em branco para usar a impressora padrão
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={handlePrintTest}
+                  className="flex items-center"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Teste de Impressão
+                </Button>
+                <Button onClick={saveSettings} className="btn-primary">
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar Configurações
                 </Button>
               </CardFooter>
             </Card>

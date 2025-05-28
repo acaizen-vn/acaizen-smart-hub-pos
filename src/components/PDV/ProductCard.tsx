@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { Product, AddOn, SelectedAddOn } from '@/types';
 import { formatCurrency, storage } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { Plus, Minus, ShoppingCart } from 'lucide-react';
+import AcaiProductModal from './AcaiProductModal';
 
 interface ProductCardProps {
   product: Product;
@@ -21,14 +23,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [selectedAddOns, setSelectedAddOns] = useState<SelectedAddOn[]>([]);
   const [observation, setObservation] = useState('');
 
-  // Verificar se o produto deve mostrar adicionais (açaí ou sorvete)
-  const shouldShowAddOns = () => {
+  // Verificar se o produto é açaí - apenas açaí deve mostrar adicionais
+  const isAcaiProduct = () => {
     const productNameLower = product.name.toLowerCase();
-    return productNameLower.includes('açaí') || productNameLower.includes('acai') || 
-           productNameLower.includes('sorvete') || productNameLower.includes('ice cream');
+    return productNameLower.includes('açaí') || productNameLower.includes('acai');
   };
 
-  const allAddOns = shouldShowAddOns() ? storage.getAddOns().filter((addon: AddOn) => addon.active) : [];
+  const allAddOns = storage.getAddOns().filter((addon: AddOn) => addon.active);
 
   const handleAddToCart = () => {
     addToCart(product, quantity, selectedAddOns, observation);
@@ -58,6 +59,48 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   const totalPrice = (product.price + selectedAddOns.reduce((sum, addon) => sum + addon.price, 0)) * quantity;
 
+  // Se for produto açaí, usar o modal específico
+  if (isAcaiProduct()) {
+    return (
+      <>
+        <div
+          className="group relative glass rounded-xl overflow-hidden card-hover cursor-pointer border border-white/30 shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
+          onClick={() => setIsDialogOpen(true)}
+        >
+          {/* Gradiente de fundo sutil */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 via-pink-50/20 to-white/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          
+          <div className="relative p-5 flex flex-col h-full">
+            <div className="flex-1">
+              <h3 className="font-semibold text-lg mb-2 text-gray-800 group-hover:text-purple-700 transition-colors">
+                {product.name}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
+                {product.description}
+              </p>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                {formatCurrency(product.price)}
+              </span>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <ShoppingCart className="h-5 w-5 text-purple-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <AcaiProductModal
+          product={product}
+          open={isDialogOpen}
+          onClose={handleDialogClose}
+        />
+      </>
+    );
+  }
+
+  // Modal padrão para outros produtos
   return (
     <>
       <div
