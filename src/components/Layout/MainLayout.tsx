@@ -1,3 +1,4 @@
+
 import React, { ReactNode, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency, storage } from '@/lib/utils';
+import { applyTheme } from '@/lib/theme';
 import { Toaster } from '@/components/ui/toaster';
 import { StoreSettings } from '@/types';
 
@@ -29,10 +31,15 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [storeSettings, setStoreSettings] = useState<StoreSettings>(() => storage.getStoreSettings());
 
-  // Carregar configurações da loja
+  // Carregar configurações da loja e aplicar tema
   useEffect(() => {
     const settings = storage.getStoreSettings();
     setStoreSettings(settings);
+    
+    // Aplicar tema se existirem configurações de cor
+    if (settings.colors) {
+      applyTheme(settings.colors);
+    }
   }, []);
 
   const handleLogout = () => {

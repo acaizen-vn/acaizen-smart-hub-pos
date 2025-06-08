@@ -138,6 +138,17 @@ export interface PrintSettings {
   copies: number;
 }
 
+// Tipos para configurações de cores
+export interface ColorSettings {
+  primary: string;
+  secondary: string;
+  background: string;
+  foreground: string;
+  accent: string;
+  muted: string;
+  preset: 'acaiteria' | 'deposito' | 'custom';
+}
+
 export interface StoreSettings {
   name: string;
   phone: string;
@@ -146,6 +157,8 @@ export interface StoreSettings {
   facebook: string;
   logoUrl?: string;
   systemTitle?: string;
+  businessType: 'acaiteria' | 'deposito_bebidas';
+  colors: ColorSettings;
   paymentGateways: PaymentGateway[];
   whatsapp: WhatsAppSettings;
   print: PrintSettings;

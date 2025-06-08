@@ -8,11 +8,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StoreSettings, PaymentGateway, WhatsAppSettings, PrintSettings } from '@/types';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { StoreSettings, PaymentGateway, WhatsAppSettings, PrintSettings, ColorSettings } from '@/types';
 import { storage } from '@/lib/utils';
+import { applyTheme, getPresetForBusinessType } from '@/lib/theme';
 import { useToast } from '@/components/ui/use-toast';
-import { Save, Download, Upload, Printer, Store, Database, FileJson, CreditCard, MessageCircle, Settings as SettingsIcon } from 'lucide-react';
+import { Save, Download, Upload, Printer, Store, Database, FileJson, CreditCard, MessageCircle, Settings as SettingsIcon, Palette } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { ColorPicker } from '@/components/Settings/ColorPicker';
 
 const SettingsPage = () => {
   const [settings, setSettings] = useState<StoreSettings>({
@@ -23,6 +26,16 @@ const SettingsPage = () => {
     facebook: '',
     logoUrl: '',
     systemTitle: '',
+    businessType: 'acaiteria',
+    colors: {
+      primary: '#9333ea',
+      secondary: '#db2777',
+      background: '#fef7ff',
+      foreground: '#1f172a',
+      accent: '#f3e8ff',
+      muted: '#f1f5f9',
+      preset: 'acaiteria'
+    },
     paymentGateways: [],
     whatsapp: {
       enabled: false,
@@ -49,20 +62,24 @@ const SettingsPage = () => {
   useEffect(() => {
     const storedSettings = storage.getStoreSettings();
     setSettings(prev => ({ ...prev, ...storedSettings }));
+    
+    // Aplicar tema atual
+    if (storedSettings.colors) {
+      applyTheme(storedSettings.colors);
+    }
   }, []);
   
   const saveSettings = () => {
     try {
       storage.saveStoreSettings(settings);
+      
+      // Aplicar tema imediatamente
+      applyTheme(settings.colors);
+      
       toast({
         title: 'Configurações salvas',
-        description: 'As configurações foram salvas com sucesso. A página será recarregada para aplicar as alterações.',
+        description: 'As configurações foram salvas com sucesso.',
       });
-      
-      // Recarregar a página depois de um pequeno delay para aplicar as mudanças
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
     } catch (error) {
       console.error('Erro ao salvar configurações:', error);
       toast({
@@ -158,6 +175,28 @@ const SettingsPage = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleBusinessTypeChange = (businessType: 'acaiteria' | 'deposito_bebidas') => {
+    const newColors = getPresetForBusinessType(businessType);
+    setSettings({
+      ...settings,
+      businessType,
+      colors: newColors,
+    });
+    
+    // Aplicar tema imediatamente
+    applyTheme(newColors);
+  };
+
+  const handleColorsChange = (colors: ColorSettings) => {
+    setSettings({
+      ...settings,
+      colors,
+    });
+    
+    // Aplicar tema imediatamente
+    applyTheme(colors);
   };
 
   const openExportDialog = () => {
@@ -317,10 +356,14 @@ const SettingsPage = () => {
         </div>
         
         <Tabs defaultValue="store" className="glass rounded-lg p-6">
-          <TabsList className="grid grid-cols-5 mb-6">
+          <TabsList className="grid grid-cols-6 mb-6">
             <TabsTrigger value="store" className="flex items-center text-xs">
               <Store className="h-4 w-4 mr-1" />
               Loja
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="flex items-center text-xs">
+              <Palette className="h-4 w-4 mr-1" />
+              Aparência
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center text-xs">
               <CreditCard className="h-4 w-4 mr-1" />
@@ -463,6 +506,67 @@ const SettingsPage = () => {
                 <Button onClick={saveSettings} className="btn-primary">
                   <Save className="h-4 w-4 mr-2" />
                   Salvar
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="appearance">
+            <Card>
+              <CardHeader>
+                <CardTitle>Aparência e Tipo de Negócio</CardTitle>
+                <CardDescription>
+                  Configure o tipo de negócio e personalize as cores do sistema.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Tipo de Negócio */}
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Tipo de Negócio</Label>
+                  <RadioGroup
+                    value={settings.businessType}
+                    onValueChange={handleBusinessTypeChange}
+                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="acaiteria" id="acaiteria" />
+                      <Label htmlFor="acaiteria" className="flex-1 cursor-pointer">
+                        <div className="p-4 border rounded-lg">
+                          <div className="font-medium">Açaiteria</div>
+                          <div className="text-sm text-muted-foreground">
+                            Sistema completo com açaí, caldas, complementos e adicionais
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="deposito_bebidas" id="deposito_bebidas" />
+                      <Label htmlFor="deposito_bebidas" className="flex-1 cursor-pointer">
+                        <div className="p-4 border rounded-lg">
+                          <div className="font-medium">Depósito de Bebidas</div>
+                          <div className="text-sm text-muted-foreground">
+                            Focado em bebidas, sem opções específicas de açaí
+                          </div>
+                        </div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {/* Configuração de Cores */}
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Personalização de Cores</Label>
+                  <ColorPicker
+                    colors={settings.colors}
+                    onColorsChange={handleColorsChange}
+                  />
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={saveSettings} className="btn-primary">
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar Configurações
                 </Button>
               </CardFooter>
             </Card>

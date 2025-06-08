@@ -1,7 +1,8 @@
 
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { Cart, CartItem, Sale, StoreSettings, User, PaymentGateway, WhatsAppSettings, PrintSettings } from "@/types";
+import { Cart, CartItem, Sale, StoreSettings, User, PaymentGateway, WhatsAppSettings, PrintSettings, ColorSettings } from "@/types";
+import { colorPresets } from "./theme";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -49,6 +50,11 @@ const defaultPrintSettings: PrintSettings = {
   autoprint: false,
   paperSize: '80mm',
   copies: 1
+};
+
+// Configurações padrão de cores
+const defaultColorSettings: ColorSettings = {
+  ...colorPresets.acaiteria
 };
 
 // Gerencia salvamento e carregamento do localStorage
@@ -125,6 +131,8 @@ export const storage = {
       facebook: 'facebook.com/acaizen',
       logoUrl: '',
       systemTitle: '',
+      businessType: 'acaiteria',
+      colors: defaultColorSettings,
       paymentGateways: [],
       whatsapp: defaultWhatsAppSettings,
       print: defaultPrintSettings
@@ -331,7 +339,7 @@ export function initializeDefaultData() {
   
   // Verificar se já existem configurações da loja
   const storeSettings = storage.getStoreSettings();
-  if (!storeSettings.paymentGateways || !storeSettings.whatsapp || !storeSettings.print) {
+  if (!storeSettings.businessType || !storeSettings.colors) {
     // Criar configurações padrão completas
     const defaultSettings: StoreSettings = {
       name: 'Açaízen SmartHUB',
@@ -341,6 +349,8 @@ export function initializeDefaultData() {
       facebook: 'facebook.com/acaizen',
       logoUrl: '',
       systemTitle: '',
+      businessType: 'acaiteria',
+      colors: defaultColorSettings,
       paymentGateways: [],
       whatsapp: defaultWhatsAppSettings,
       print: defaultPrintSettings
