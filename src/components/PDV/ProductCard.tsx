@@ -80,7 +80,6 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
           open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           product={product}
-          onAddToCart={handleAddToCart}
         />
       )}
     </>
