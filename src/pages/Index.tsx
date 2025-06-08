@@ -5,8 +5,11 @@ import ProductCard from '@/components/PDV/ProductCard';
 import CartItem from '@/components/PDV/CartItem';
 import CheckoutModal from '@/components/PDV/CheckoutModal';
 import ReceiptModal from '@/components/PDV/ReceiptModal';
+import CashStatus from '@/components/CashRegister/CashStatus';
+import OpenCashModal from '@/components/CashRegister/OpenCashModal';
+import CloseCashModal from '@/components/CashRegister/CloseCashModal';
 import { useCart } from '@/contexts/CartContext';
-import { Product, Category, Sale } from '@/types';
+import { Product, Category, Sale, CashRegister } from '@/types';
 import { storage, formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,17 +22,22 @@ const PDVPage = () => {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
+  const [currentCashRegister, setCurrentCashRegister] = useState<CashRegister | null>(null);
+  const [isOpenCashModalOpen, setIsOpenCashModalOpen] = useState(false);
+  const [isCloseCashModalOpen, setIsCloseCashModalOpen] = useState(false);
   
   const { cart, clearCart, addToCart } = useCart();
   const storeSettings = storage.getStoreSettings();
   
-  // Carregar categorias e produtos do localStorage
+  // Carregar categorias, produtos e caixa atual
   useEffect(() => {
     const loadedCategories = storage.getCategories().filter((cat: Category) => cat.active);
     const loadedProducts = storage.getProducts().filter((prod: Product) => prod.active);
+    const cashRegister = storage.getCurrentCashRegister();
     
     setCategories(loadedCategories);
     setProducts(loadedProducts);
+    setCurrentCashRegister(cashRegister);
     
     if (loadedCategories.length > 0) {
       setSelectedCategory(loadedCategories[0].id);
@@ -42,13 +50,40 @@ const PDVPage = () => {
     : products;
 
   const handleAddToCart = (product: Product, addOns: any[] = [], observation: string = '') => {
+    // Verificar se o caixa está aberto
+    if (!currentCashRegister?.isOpen) {
+      return;
+    }
     addToCart(product, 1, addOns, observation);
   };
     
   const handleCompleteSale = (sale: Sale) => {
+    // Atualizar dados do caixa após venda
+    if (currentCashRegister) {
+      const updatedCashRegister: CashRegister = {
+        ...currentCashRegister,
+        totalSales: currentCashRegister.totalSales + sale.subtotal,
+        salesCount: currentCashRegister.salesCount + 1,
+        totalCashSales: currentCashRegister.totalCashSales + (sale.paymentMethod === 'cash' ? sale.subtotal : 0),
+        totalCardSales: currentCashRegister.totalCardSales + (['credit', 'debit'].includes(sale.paymentMethod) ? sale.subtotal : 0),
+        totalPixSales: currentCashRegister.totalPixSales + (sale.paymentMethod === 'pix' ? sale.subtotal : 0)
+      };
+      
+      storage.saveCashRegister(updatedCashRegister);
+      setCurrentCashRegister(updatedCashRegister);
+    }
+
     setCompletedSale(sale);
     setIsCheckoutModalOpen(false);
     setIsReceiptModalOpen(true);
+  };
+
+  const handleCashOpened = (cashRegister: CashRegister) => {
+    setCurrentCashRegister(cashRegister);
+  };
+
+  const handleCashClosed = () => {
+    setCurrentCashRegister(null);
   };
 
   // Definir ícones e textos baseados no tipo de negócio
@@ -71,14 +106,22 @@ const PDVPage = () => {
   
   return (
     <MainLayout>
-      <div className="flex flex-col md:flex-row h-full gap-6">
+      <div className="flex flex-col lg:flex-row h-full gap-6">
         {/* Seção de produtos */}
-        <div className="md:w-3/5 lg:w-2/3 space-y-4">
+        <div className="lg:w-2/3 space-y-4">
           <div className="glass rounded-lg p-4">
             <h2 className="text-xl font-semibold mb-4 flex items-center">
               {config.productIcon}
               {config.productTitle}
             </h2>
+            
+            {!currentCashRegister?.isOpen && (
+              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ Caixa fechado. Abra o caixa para começar as vendas.
+                </p>
+              </div>
+            )}
             
             <Tabs 
               value={selectedCategory || ''} 
@@ -104,6 +147,7 @@ const PDVPage = () => {
                         key={product.id} 
                         product={product} 
                         onAddToCart={handleAddToCart}
+                        disabled={!currentCashRegister?.isOpen}
                       />
                     ))}
                   </div>
@@ -119,8 +163,16 @@ const PDVPage = () => {
           </div>
         </div>
         
-        {/* Seção do carrinho */}
-        <div className="md:w-2/5 lg:w-1/3">
+        {/* Seção do carrinho e caixa */}
+        <div className="lg:w-1/3 space-y-4">
+          {/* Status do Caixa */}
+          <CashStatus
+            cashRegister={currentCashRegister}
+            onOpenCash={() => setIsOpenCashModalOpen(true)}
+            onCloseCash={() => setIsCloseCashModalOpen(true)}
+          />
+
+          {/* Carrinho */}
           <div className="glass rounded-lg p-4 sticky top-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center">
@@ -136,7 +188,7 @@ const PDVPage = () => {
               )}
             </div>
             
-            <div className="space-y-3 mb-4 overflow-y-auto" style={{ maxHeight: '400px' }}>
+            <div className="space-y-3 mb-4 overflow-y-auto" style={{ maxHeight: '300px' }}>
               {cart.items.map((item) => (
                 <CartItem key={item.id} item={item} />
               ))}
@@ -157,7 +209,7 @@ const PDVPage = () => {
               <div className="mt-6">
                 <Button
                   onClick={() => setIsCheckoutModalOpen(true)}
-                  disabled={cart.items.length === 0}
+                  disabled={cart.items.length === 0 || !currentCashRegister?.isOpen}
                   className="w-full h-12 text-lg btn-secondary"
                 >
                   {storeSettings.businessType === 'deposito_bebidas' ? 'Finalizar Venda' : 'Finalizar Pedido'}
@@ -168,14 +220,28 @@ const PDVPage = () => {
         </div>
       </div>
       
-      {/* Modal de checkout */}
+      {/* Modals */}
+      <OpenCashModal
+        open={isOpenCashModalOpen}
+        onClose={() => setIsOpenCashModalOpen(false)}
+        onCashOpened={handleCashOpened}
+      />
+
+      {currentCashRegister && (
+        <CloseCashModal
+          open={isCloseCashModalOpen}
+          onClose={() => setIsCloseCashModalOpen(false)}
+          cashRegister={currentCashRegister}
+          onCashClosed={handleCashClosed}
+        />
+      )}
+      
       <CheckoutModal
         open={isCheckoutModalOpen}
         onClose={() => setIsCheckoutModalOpen(false)}
         onFinalized={handleCompleteSale}
       />
       
-      {/* Modal de comprovante */}
       {completedSale && (
         <ReceiptModal
           open={isReceiptModalOpen}

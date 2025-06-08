@@ -108,6 +108,36 @@ export interface Sale {
   createdBy: string; // ID do usuário que realizou a venda
 }
 
+// Novos tipos para controle de caixa
+export interface CashRegister {
+  id: string;
+  openedBy: string;
+  openedAt: string;
+  closedBy?: string;
+  closedAt?: string;
+  initialAmount: number;
+  finalAmount?: number;
+  totalSales: number;
+  totalCashSales: number;
+  totalCardSales: number;
+  totalPixSales: number;
+  salesCount: number;
+  isOpen: boolean;
+  observations?: string;
+}
+
+export interface CashMovement {
+  id: string;
+  cashRegisterId: string;
+  type: 'opening' | 'sale' | 'withdrawal' | 'deposit' | 'closing';
+  amount: number;
+  description: string;
+  createdBy: string;
+  createdAt: string;
+  paymentMethod?: PaymentMethod;
+  saleId?: string;
+}
+
 // Novos tipos para gateways de pagamento
 export interface PaymentGateway {
   id: string;

@@ -1,360 +1,191 @@
 
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-import { Cart, CartItem, Sale, StoreSettings, User, PaymentGateway, WhatsAppSettings, PrintSettings, ColorSettings } from "@/types";
-import { colorPresets } from "./theme";
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+import { User, Product, Category, Sale, StoreSettings, ColorSettings, CashRegister, CashMovement } from "@/types"
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 
-// Função para gerar ID único
-export function generateId(): string {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-}
-
-// Simulação de criptografia - em um app real, usaríamos bcrypt ou similar
-export function hashPassword(password: string): string {
-  return btoa(password + "salt_simulado");
-}
-
-// Formata número para moeda brasileira
-export function formatCurrency(value: number): string {
+export const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
   }).format(value);
-}
-
-// Formata data para formato brasileiro
-export function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('pt-BR');
-}
-
-export function formatDateTime(date: string): string {
-  return new Date(date).toLocaleString('pt-BR');
-}
-
-// Configurações padrão para WhatsApp
-const defaultWhatsAppSettings: WhatsAppSettings = {
-  enabled: false,
-  connected: false,
-  botEnabled: false,
-  welcomeMessage: 'Olá! Bem-vindo ao nosso atendimento.',
-  autoReply: false,
-  phoneNumber: ''
 };
 
-// Configurações padrão para impressão
-const defaultPrintSettings: PrintSettings = {
-  autoprint: false,
-  paperSize: '80mm',
-  copies: 1
-};
-
-// Configurações padrão de cores
-const defaultColorSettings: ColorSettings = {
-  ...colorPresets.acaiteria
-};
-
-// Gerencia salvamento e carregamento do localStorage
 export const storage = {
-  // Funções para usuários
+  // Usuários
   getUsers: (): User[] => {
-    const users = localStorage.getItem('users');
+    const users = localStorage.getItem('pdv_users');
     return users ? JSON.parse(users) : [];
   },
-  saveUsers: (users: User[]) => {
-    localStorage.setItem('users', JSON.stringify(users));
+  
+  saveUser: (user: User) => {
+    const users = storage.getUsers();
+    const existingIndex = users.findIndex(u => u.id === user.id);
+    
+    if (existingIndex >= 0) {
+      users[existingIndex] = user;
+    } else {
+      users.push(user);
+    }
+    
+    localStorage.setItem('pdv_users', JSON.stringify(users));
   },
   
-  // Funções para autenticação
-  getAuth: () => {
-    const auth = localStorage.getItem('auth');
-    return auth ? JSON.parse(auth) : { user: null, isAuthenticated: false };
+  deleteUser: (userId: string) => {
+    const users = storage.getUsers().filter(u => u.id !== userId);
+    localStorage.setItem('pdv_users', JSON.stringify(users));
   },
-  saveAuth: (auth: { user: User | null; isAuthenticated: boolean }) => {
-    localStorage.setItem('auth', JSON.stringify(auth));
-  },
-  
-  // Funções para produtos, categorias e adicionais
-  getProducts: () => {
-    const products = localStorage.getItem('products');
+
+  // Produtos
+  getProducts: (): Product[] => {
+    const products = localStorage.getItem('pdv_products');
     return products ? JSON.parse(products) : [];
   },
-  saveProducts: (products: any[]) => {
-    localStorage.setItem('products', JSON.stringify(products));
+  
+  saveProduct: (product: Product) => {
+    const products = storage.getProducts();
+    const existingIndex = products.findIndex(p => p.id === product.id);
+    
+    if (existingIndex >= 0) {
+      products[existingIndex] = product;
+    } else {
+      products.push(product);
+    }
+    
+    localStorage.setItem('pdv_products', JSON.stringify(products));
   },
   
-  getCategories: () => {
-    const categories = localStorage.getItem('categories');
+  deleteProduct: (productId: string) => {
+    const products = storage.getProducts().filter(p => p.id !== productId);
+    localStorage.setItem('pdv_products', JSON.stringify(products));
+  },
+
+  // Categorias
+  getCategories: (): Category[] => {
+    const categories = localStorage.getItem('pdv_categories');
     return categories ? JSON.parse(categories) : [];
   },
-  saveCategories: (categories: any[]) => {
-    localStorage.setItem('categories', JSON.stringify(categories));
+  
+  saveCategory: (category: Category) => {
+    const categories = storage.getCategories();
+    const existingIndex = categories.findIndex(c => c.id === category.id);
+    
+    if (existingIndex >= 0) {
+      categories[existingIndex] = category;
+    } else {
+      categories.push(category);
+    }
+    
+    localStorage.setItem('pdv_categories', JSON.stringify(categories));
   },
   
-  getAddOns: () => {
-    const addOns = localStorage.getItem('addOns');
-    return addOns ? JSON.parse(addOns) : [];
+  deleteCategory: (categoryId: string) => {
+    const categories = storage.getCategories().filter(c => c.id !== categoryId);
+    localStorage.setItem('pdv_categories', JSON.stringify(categories));
   },
-  saveAddOns: (addOns: any[]) => {
-    localStorage.setItem('addOns', JSON.stringify(addOns));
-  },
-  
-  // Funções para carrinho
-  getCart: (): Cart => {
-    const cart = localStorage.getItem('cart');
-    return cart ? JSON.parse(cart) : { items: [], totalItems: 0, subtotal: 0 };
-  },
-  saveCart: (cart: Cart) => {
-    localStorage.setItem('cart', JSON.stringify(cart));
-  },
-  
-  // Funções para vendas
+
+  // Vendas
   getSales: (): Sale[] => {
-    const sales = localStorage.getItem('sales');
+    const sales = localStorage.getItem('pdv_sales');
     return sales ? JSON.parse(sales) : [];
   },
-  saveSales: (sales: Sale[]) => {
-    localStorage.setItem('sales', JSON.stringify(sales));
-  },
   
-  // Configurações da loja atualizadas
+  saveSale: (sale: Sale) => {
+    const sales = storage.getSales();
+    sales.push(sale);
+    localStorage.setItem('pdv_sales', JSON.stringify(sales));
+  },
+
+  // Configurações da loja
   getStoreSettings: (): StoreSettings => {
-    const settings = localStorage.getItem('storeSettings');
-    return settings ? JSON.parse(settings) : {
-      name: 'Açaízen SmartHUB',
-      phone: '(00) 00000-0000',
-      address: 'Av. Exemplo, 123 - Cidade, UF',
-      instagram: '@acaizen',
-      facebook: 'facebook.com/acaizen',
-      logoUrl: '',
-      systemTitle: '',
-      businessType: 'acaiteria',
-      colors: defaultColorSettings,
-      paymentGateways: [],
-      whatsapp: defaultWhatsAppSettings,
-      print: defaultPrintSettings
+    const settings = localStorage.getItem('pdv_store_settings');
+    const defaultColors: ColorSettings = {
+      primary: 'hsl(271, 81%, 56%)',
+      secondary: 'hsl(210, 40%, 98%)',
+      background: 'hsl(0, 0%, 100%)',
+      foreground: 'hsl(222, 84%, 5%)',
+      accent: 'hsl(210, 40%, 96%)',
+      muted: 'hsl(210, 40%, 96%)',
+      preset: 'acaiteria'
     };
-  },
-  saveStoreSettings: (settings: StoreSettings) => {
-    localStorage.setItem('storeSettings', JSON.stringify(settings));
-  },
-  
-  // Função para exportar todos os dados
-  exportData: () => {
-    const data = {
-      users: localStorage.getItem('users'),
-      products: localStorage.getItem('products'),
-      categories: localStorage.getItem('categories'),
-      addOns: localStorage.getItem('addOns'),
-      sales: localStorage.getItem('sales'),
-      storeSettings: localStorage.getItem('storeSettings'),
-    };
-    return JSON.stringify(data);
-  },
-  
-  // Função para importar todos os dados
-  importData: (data: string) => {
-    try {
-      const parsed = JSON.parse(data);
-      if (parsed.users) localStorage.setItem('users', parsed.users);
-      if (parsed.products) localStorage.setItem('products', parsed.products);
-      if (parsed.categories) localStorage.setItem('categories', parsed.categories);
-      if (parsed.addOns) localStorage.setItem('addOns', parsed.addOns);
-      if (parsed.sales) localStorage.setItem('sales', parsed.sales);
-      if (parsed.storeSettings) localStorage.setItem('storeSettings', parsed.storeSettings);
-      return true;
-    } catch (e) {
-      console.error("Erro ao importar dados:", e);
-      return false;
+    
+    if (settings) {
+      const parsed = JSON.parse(settings);
+      return {
+        ...parsed,
+        colors: parsed.colors || defaultColors
+      };
     }
+    
+    return {
+      name: '',
+      phone: '',
+      address: '',
+      instagram: '',
+      facebook: '',
+      businessType: 'acaiteria',
+      colors: defaultColors,
+      paymentGateways: [],
+      whatsapp: {
+        enabled: false,
+        connected: false,
+        botEnabled: false,
+        welcomeMessage: '',
+        autoReply: false,
+        phoneNumber: ''
+      },
+      print: {
+        autoprint: false,
+        paperSize: '80mm',
+        copies: 1
+      }
+    };
+  },
+  
+  saveStoreSettings: (settings: StoreSettings) => {
+    localStorage.setItem('pdv_store_settings', JSON.stringify(settings));
+  },
+
+  // Caixa
+  getCashRegisters: (): CashRegister[] => {
+    const cashRegisters = localStorage.getItem('pdv_cash_registers');
+    return cashRegisters ? JSON.parse(cashRegisters) : [];
+  },
+
+  getCurrentCashRegister: (): CashRegister | null => {
+    const cashRegisters = storage.getCashRegisters();
+    return cashRegisters.find(cr => cr.isOpen) || null;
+  },
+
+  saveCashRegister: (cashRegister: CashRegister) => {
+    const cashRegisters = storage.getCashRegisters();
+    const existingIndex = cashRegisters.findIndex(cr => cr.id === cashRegister.id);
+    
+    if (existingIndex >= 0) {
+      cashRegisters[existingIndex] = cashRegister;
+    } else {
+      cashRegisters.push(cashRegister);
+    }
+    
+    localStorage.setItem('pdv_cash_registers', JSON.stringify(cashRegisters));
+  },
+
+  // Movimentações do caixa
+  getCashMovements: (): CashMovement[] => {
+    const movements = localStorage.getItem('pdv_cash_movements');
+    return movements ? JSON.parse(movements) : [];
+  },
+
+  saveCashMovement: (movement: CashMovement) => {
+    const movements = storage.getCashMovements();
+    movements.push(movement);
+    localStorage.setItem('pdv_cash_movements', JSON.stringify(movements));
+  },
+
+  getCashMovementsByCashRegister: (cashRegisterId: string): CashMovement[] => {
+    return storage.getCashMovements().filter(m => m.cashRegisterId === cashRegisterId);
   }
 };
-
-// Função para inicializar dados padrão se não existirem
-export function initializeDefaultData() {
-  // Verificar se já existem usuários
-  const users = storage.getUsers();
-  if (users.length === 0) {
-    // Criar usuário administrador padrão
-    const adminUser: User = {
-      id: generateId(),
-      name: 'Administrador',
-      email: 'pdvzen1@gmail.com',
-      password: hashPassword('Zen2024'),
-      role: 'admin',
-      active: true,
-      createdAt: new Date().toISOString(),
-    };
-    storage.saveUsers([adminUser]);
-  }
-  
-  // Verificar se já existem categorias
-  const categories = storage.getCategories();
-  if (categories.length === 0) {
-    // Criar categorias padrão
-    const defaultCategories = [
-      {
-        id: generateId(),
-        name: 'Açaí',
-        description: 'Produtos de açaí',
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Bebidas',
-        description: 'Sucos, refrigerantes e outras bebidas',
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Lanches',
-        description: 'Lanches e salgados',
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-    ];
-    storage.saveCategories(defaultCategories);
-    
-    // Adicionar produtos para cada categoria
-    const acaiCategoryId = defaultCategories[0].id;
-    const bebidasCategoryId = defaultCategories[1].id;
-    const lanchesCategoryId = defaultCategories[2].id;
-    
-    const defaultProducts = [
-      {
-        id: generateId(),
-        name: 'Açaí Tradicional 300ml',
-        price: 15.90,
-        description: 'Açaí puro na tigela (300ml)',
-        categoryId: acaiCategoryId,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Açaí Tradicional 500ml',
-        price: 22.90,
-        description: 'Açaí puro na tigela (500ml)',
-        categoryId: acaiCategoryId,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Açaí com Banana 300ml',
-        price: 18.90,
-        description: 'Açaí com banana na tigela (300ml)',
-        categoryId: acaiCategoryId,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Refrigerante Lata',
-        price: 5.00,
-        description: 'Refrigerante em lata 350ml',
-        categoryId: bebidasCategoryId,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Suco Natural',
-        price: 8.00,
-        description: 'Suco natural de frutas',
-        categoryId: bebidasCategoryId,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Coxinha',
-        price: 6.00,
-        description: 'Coxinha de frango',
-        categoryId: lanchesCategoryId,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Pão de Queijo',
-        price: 4.50,
-        description: 'Pão de queijo tradicional',
-        categoryId: lanchesCategoryId,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-    ];
-    storage.saveProducts(defaultProducts);
-  }
-  
-  // Verificar se já existem adicionais
-  const addOns = storage.getAddOns();
-  if (addOns.length === 0) {
-    // Criar adicionais padrão
-    const defaultAddOns = [
-      {
-        id: generateId(),
-        name: 'Granola',
-        price: 2.00,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Leite Condensado',
-        price: 2.50,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Leite Ninho',
-        price: 3.00,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Banana',
-        price: 2.00,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: generateId(),
-        name: 'Morango',
-        price: 3.50,
-        active: true,
-        createdAt: new Date().toISOString(),
-      },
-    ];
-    storage.saveAddOns(defaultAddOns);
-  }
-  
-  // Verificar se já existem configurações da loja
-  const storeSettings = storage.getStoreSettings();
-  if (!storeSettings.businessType || !storeSettings.colors) {
-    // Criar configurações padrão completas
-    const defaultSettings: StoreSettings = {
-      name: 'Açaízen SmartHUB',
-      phone: '(00) 00000-0000',
-      address: 'Av. Exemplo, 123 - Cidade, UF',
-      instagram: '@acaizen',
-      facebook: 'facebook.com/acaizen',
-      logoUrl: '',
-      systemTitle: '',
-      businessType: 'acaiteria',
-      colors: defaultColorSettings,
-      paymentGateways: [],
-      whatsapp: defaultWhatsAppSettings,
-      print: defaultPrintSettings
-    };
-    storage.saveStoreSettings(defaultSettings);
-  }
-}

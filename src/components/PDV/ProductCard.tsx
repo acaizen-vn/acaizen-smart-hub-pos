@@ -10,9 +10,10 @@ import AcaiProductModal from './AcaiProductModal';
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product, addOns?: any[], observation?: string) => void;
+  disabled?: boolean;
 }
 
-const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
+const ProductCard = ({ product, onAddToCart, disabled = false }: ProductCardProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const storeSettings = storage.getStoreSettings();
   
@@ -21,6 +22,8 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   const shouldShowAcaiModal = isAcaiProduct && storeSettings.businessType === 'acaiteria';
 
   const handleClick = () => {
+    if (disabled) return;
+    
     if (shouldShowAcaiModal) {
       setIsModalOpen(true);
     } else {
@@ -40,7 +43,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
 
   return (
     <>
-      <Card className="interactive-card h-full">
+      <Card className={`interactive-card h-full ${disabled ? 'opacity-50' : ''}`}>
         <CardContent className="p-4 h-full flex flex-col">
           {product.image && (
             <div className="w-full h-32 mb-3 overflow-hidden rounded-lg">
@@ -70,6 +73,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                 onClick={handleClick}
                 className="w-full btn-primary"
                 size="sm"
+                disabled={disabled}
               >
                 <Plus className="h-4 w-4 mr-1" />
                 {buttonText}
