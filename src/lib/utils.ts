@@ -1,4 +1,3 @@
-
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { User, Product, Category, Sale, StoreSettings, ColorSettings, CashRegister, CashMovement, AddOn, AuthState, Cart } from "@/types"
@@ -292,7 +291,7 @@ export const storage = {
   },
 
   // Data Import/Export
-  exportData: () => {
+  exportData: (): string => {
     const data = {
       users: storage.getUsers(),
       products: storage.getProducts(),
@@ -304,7 +303,12 @@ export const storage = {
       cashMovements: storage.getCashMovements()
     };
     
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    return JSON.stringify(data, null, 2);
+  },
+
+  downloadBackup: () => {
+    const data = storage.exportData();
+    const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -315,8 +319,9 @@ export const storage = {
     URL.revokeObjectURL(url);
   },
 
-  importData: (data: any) => {
+  importData: (dataString: string) => {
     try {
+      const data = JSON.parse(dataString);
       if (data.users) storage.saveUsers(data.users);
       if (data.products) storage.saveProducts(data.products);
       if (data.categories) storage.saveCategories(data.categories);
