@@ -20,7 +20,7 @@ const PDVPage = () => {
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
   
-  const { cart, clearCart } = useCart();
+  const { cart, clearCart, addToCart } = useCart();
   
   // Carregar categorias e produtos do localStorage
   useEffect(() => {
@@ -39,6 +39,10 @@ const PDVPage = () => {
   const filteredProducts = selectedCategory
     ? products.filter((product) => product.categoryId === selectedCategory)
     : products;
+
+  const handleAddToCart = (product: Product, addOns: any[] = [], observation: string = '') => {
+    addToCart(product, 1, addOns, observation);
+  };
     
   const handleCompleteSale = (sale: Sale) => {
     setCompletedSale(sale);
@@ -74,7 +78,11 @@ const PDVPage = () => {
                 <TabsContent key={category.id} value={category.id} className="mt-4 relative min-h-[300px]">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredProducts.map((product) => (
-                      <ProductCard key={product.id} product={product} />
+                      <ProductCard 
+                        key={product.id} 
+                        product={product} 
+                        onAddToCart={handleAddToCart}
+                      />
                     ))}
                   </div>
                   

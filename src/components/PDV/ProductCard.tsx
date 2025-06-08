@@ -77,7 +77,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
 
       {shouldShowAcaiModal && (
         <AcaiProductModal
-          isOpen={isModalOpen}
+          open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           product={product}
           onAddToCart={handleAddToCart}
