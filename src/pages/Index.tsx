@@ -10,7 +10,7 @@ import { Product, Category, Sale } from '@/types';
 import { storage, formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, Trash } from 'lucide-react';
+import { ShoppingCart, Trash, Package, Coffee } from 'lucide-react';
 
 const PDVPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -21,6 +21,7 @@ const PDVPage = () => {
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
   
   const { cart, clearCart, addToCart } = useCart();
+  const storeSettings = storage.getStoreSettings();
   
   // Carregar categorias e produtos do localStorage
   useEffect(() => {
@@ -49,6 +50,24 @@ const PDVPage = () => {
     setIsCheckoutModalOpen(false);
     setIsReceiptModalOpen(true);
   };
+
+  // Definir ícones e textos baseados no tipo de negócio
+  const businessTypeConfig = {
+    acaiteria: {
+      productIcon: <Coffee className="mr-2 h-5 w-5" />,
+      productTitle: "Açaís e Produtos",
+      cartTitle: "Pedido",
+      emptyMessage: "Carrinho vazio. Adicione produtos ao pedido."
+    },
+    deposito_bebidas: {
+      productIcon: <Package className="mr-2 h-5 w-5" />,
+      productTitle: "Bebidas e Produtos", 
+      cartTitle: "Venda",
+      emptyMessage: "Nenhum item selecionado. Adicione produtos à venda."
+    }
+  };
+
+  const config = businessTypeConfig[storeSettings.businessType] || businessTypeConfig.deposito_bebidas;
   
   return (
     <MainLayout>
@@ -56,7 +75,10 @@ const PDVPage = () => {
         {/* Seção de produtos */}
         <div className="md:w-3/5 lg:w-2/3 space-y-4">
           <div className="glass rounded-lg p-4">
-            <h2 className="text-xl font-semibold mb-4">Produtos</h2>
+            <h2 className="text-xl font-semibold mb-4 flex items-center">
+              {config.productIcon}
+              {config.productTitle}
+            </h2>
             
             <Tabs 
               value={selectedCategory || ''} 
@@ -103,7 +125,7 @@ const PDVPage = () => {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold flex items-center">
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                Pedido
+                {config.cartTitle}
               </h2>
               
               {cart.items.length > 0 && (
@@ -121,7 +143,7 @@ const PDVPage = () => {
               
               {cart.items.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  Carrinho vazio. Adicione produtos ao pedido.
+                  {config.emptyMessage}
                 </div>
               )}
             </div>
@@ -138,7 +160,7 @@ const PDVPage = () => {
                   disabled={cart.items.length === 0}
                   className="w-full h-12 text-lg btn-secondary"
                 >
-                  Finalizar Pedido
+                  {storeSettings.businessType === 'deposito_bebidas' ? 'Finalizar Venda' : 'Finalizar Pedido'}
                 </Button>
               </div>
             </div>

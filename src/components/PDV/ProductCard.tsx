@@ -16,7 +16,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const storeSettings = storage.getStoreSettings();
   
-  // Verificar se é produto de açaí e se o tipo de negócio permite modal expandido
+  // Apenas produtos de açaí em açaiteria devem abrir modal expandido
   const isAcaiProduct = product.name.toLowerCase().includes('açaí') || product.name.toLowerCase().includes('acai');
   const shouldShowAcaiModal = isAcaiProduct && storeSettings.businessType === 'acaiteria';
 
@@ -24,7 +24,7 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
     if (shouldShowAcaiModal) {
       setIsModalOpen(true);
     } else {
-      // Para depósito de bebidas ou produtos que não são açaí, adicionar diretamente
+      // Para depósito de bebidas ou produtos simples, adicionar diretamente
       onAddToCart(product, [], '');
     }
   };
@@ -33,6 +33,10 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
     onAddToCart(product, addOns, observation);
     setIsModalOpen(false);
   };
+
+  // Para depósito de bebidas, usar terminologia específica
+  const buttonText = storeSettings.businessType === 'deposito_bebidas' ? 'Adicionar' : 
+                    (shouldShowAcaiModal ? 'Personalizar' : 'Adicionar');
 
   return (
     <>
@@ -68,14 +72,15 @@ const ProductCard = ({ product, onAddToCart }: ProductCardProps) => {
                 size="sm"
               >
                 <Plus className="h-4 w-4 mr-1" />
-                {shouldShowAcaiModal ? 'Personalizar' : 'Adicionar'}
+                {buttonText}
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {shouldShowAcaiModal && (
+      {/* Modal de açaí só aparece para açaiteria */}
+      {shouldShowAcaiModal && storeSettings.businessType === 'acaiteria' && (
         <AcaiProductModal
           open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
