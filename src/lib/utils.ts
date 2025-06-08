@@ -1,7 +1,7 @@
 
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { User, Product, Category, Sale, StoreSettings, ColorSettings, CashRegister, CashMovement } from "@/types"
+import { User, Product, Category, Sale, StoreSettings, ColorSettings, CashRegister, CashMovement, AddOn, AuthState, Cart } from "@/types"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -14,8 +14,74 @@ export const formatCurrency = (value: number): string => {
   }).format(value);
 };
 
+export const formatDateTime = (dateString: string): string => {
+  return new Date(dateString).toLocaleString('pt-BR');
+};
+
+export const formatDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleDateString('pt-BR');
+};
+
+export const generateId = (): string => {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+};
+
+export const hashPassword = (password: string): string => {
+  // Simple encoding for demo purposes - in production use proper hashing
+  return btoa(password + 'salt');
+};
+
+export const initializeDefaultData = () => {
+  // Initialize default admin user if no users exist
+  const users = storage.getUsers();
+  if (users.length === 0) {
+    const defaultAdmin: User = {
+      id: generateId(),
+      name: 'Administrador',
+      email: 'pdvzen1@gmail.com',
+      password: hashPassword('Zen2024'),
+      role: 'admin',
+      active: true,
+      createdAt: new Date().toISOString()
+    };
+    storage.saveUser(defaultAdmin);
+  }
+
+  // Initialize default categories
+  const categories = storage.getCategories();
+  if (categories.length === 0) {
+    const defaultCategories: Category[] = [
+      {
+        id: generateId(),
+        name: 'Açaí',
+        description: 'Produtos de açaí',
+        active: true,
+        createdAt: new Date().toISOString()
+      },
+      {
+        id: generateId(),
+        name: 'Bebidas',
+        description: 'Bebidas diversas',
+        active: true,
+        createdAt: new Date().toISOString()
+      }
+    ];
+    defaultCategories.forEach(category => storage.saveCategory(category));
+  }
+};
+
 export const storage = {
-  // Usuários
+  // Auth
+  getAuth: (): AuthState => {
+    const auth = localStorage.getItem('pdv_auth');
+    return auth ? JSON.parse(auth) : { user: null, isAuthenticated: false };
+  },
+
+  saveAuth: (authState: AuthState) => {
+    localStorage.setItem('pdv_auth', JSON.stringify(authState));
+  },
+
+  // Users
   getUsers: (): User[] => {
     const users = localStorage.getItem('pdv_users');
     return users ? JSON.parse(users) : [];
@@ -33,13 +99,17 @@ export const storage = {
     
     localStorage.setItem('pdv_users', JSON.stringify(users));
   },
+
+  saveUsers: (users: User[]) => {
+    localStorage.setItem('pdv_users', JSON.stringify(users));
+  },
   
   deleteUser: (userId: string) => {
     const users = storage.getUsers().filter(u => u.id !== userId);
     localStorage.setItem('pdv_users', JSON.stringify(users));
   },
 
-  // Produtos
+  // Products
   getProducts: (): Product[] => {
     const products = localStorage.getItem('pdv_products');
     return products ? JSON.parse(products) : [];
@@ -57,13 +127,17 @@ export const storage = {
     
     localStorage.setItem('pdv_products', JSON.stringify(products));
   },
+
+  saveProducts: (products: Product[]) => {
+    localStorage.setItem('pdv_products', JSON.stringify(products));
+  },
   
   deleteProduct: (productId: string) => {
     const products = storage.getProducts().filter(p => p.id !== productId);
     localStorage.setItem('pdv_products', JSON.stringify(products));
   },
 
-  // Categorias
+  // Categories
   getCategories: (): Category[] => {
     const categories = localStorage.getItem('pdv_categories');
     return categories ? JSON.parse(categories) : [];
@@ -81,13 +155,37 @@ export const storage = {
     
     localStorage.setItem('pdv_categories', JSON.stringify(categories));
   },
+
+  saveCategories: (categories: Category[]) => {
+    localStorage.setItem('pdv_categories', JSON.stringify(categories));
+  },
   
   deleteCategory: (categoryId: string) => {
     const categories = storage.getCategories().filter(c => c.id !== categoryId);
     localStorage.setItem('pdv_categories', JSON.stringify(categories));
   },
 
-  // Vendas
+  // AddOns
+  getAddOns: (): AddOn[] => {
+    const addOns = localStorage.getItem('pdv_addons');
+    return addOns ? JSON.parse(addOns) : [];
+  },
+
+  saveAddOns: (addOns: AddOn[]) => {
+    localStorage.setItem('pdv_addons', JSON.stringify(addOns));
+  },
+
+  // Cart
+  getCart: (): Cart => {
+    const cart = localStorage.getItem('pdv_cart');
+    return cart ? JSON.parse(cart) : { items: [], totalItems: 0, subtotal: 0 };
+  },
+
+  saveCart: (cart: Cart) => {
+    localStorage.setItem('pdv_cart', JSON.stringify(cart));
+  },
+
+  // Sales
   getSales: (): Sale[] => {
     const sales = localStorage.getItem('pdv_sales');
     return sales ? JSON.parse(sales) : [];
@@ -99,7 +197,11 @@ export const storage = {
     localStorage.setItem('pdv_sales', JSON.stringify(sales));
   },
 
-  // Configurações da loja
+  saveSales: (sales: Sale[]) => {
+    localStorage.setItem('pdv_sales', JSON.stringify(sales));
+  },
+
+  // Store Settings
   getStoreSettings: (): StoreSettings => {
     const settings = localStorage.getItem('pdv_store_settings');
     const defaultColors: ColorSettings = {
@@ -149,7 +251,7 @@ export const storage = {
     localStorage.setItem('pdv_store_settings', JSON.stringify(settings));
   },
 
-  // Caixa
+  // Cash Registers
   getCashRegisters: (): CashRegister[] => {
     const cashRegisters = localStorage.getItem('pdv_cash_registers');
     return cashRegisters ? JSON.parse(cashRegisters) : [];
@@ -173,7 +275,7 @@ export const storage = {
     localStorage.setItem('pdv_cash_registers', JSON.stringify(cashRegisters));
   },
 
-  // Movimentações do caixa
+  // Cash Movements
   getCashMovements: (): CashMovement[] => {
     const movements = localStorage.getItem('pdv_cash_movements');
     return movements ? JSON.parse(movements) : [];
@@ -187,5 +289,50 @@ export const storage = {
 
   getCashMovementsByCashRegister: (cashRegisterId: string): CashMovement[] => {
     return storage.getCashMovements().filter(m => m.cashRegisterId === cashRegisterId);
+  },
+
+  // Data Import/Export
+  exportData: () => {
+    const data = {
+      users: storage.getUsers(),
+      products: storage.getProducts(),
+      categories: storage.getCategories(),
+      addOns: storage.getAddOns(),
+      sales: storage.getSales(),
+      storeSettings: storage.getStoreSettings(),
+      cashRegisters: storage.getCashRegisters(),
+      cashMovements: storage.getCashMovements()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `pdv_backup_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  },
+
+  importData: (data: any) => {
+    try {
+      if (data.users) storage.saveUsers(data.users);
+      if (data.products) storage.saveProducts(data.products);
+      if (data.categories) storage.saveCategories(data.categories);
+      if (data.addOns) storage.saveAddOns(data.addOns);
+      if (data.sales) storage.saveSales(data.sales);
+      if (data.storeSettings) storage.saveStoreSettings(data.storeSettings);
+      if (data.cashRegisters) {
+        data.cashRegisters.forEach((cr: CashRegister) => storage.saveCashRegister(cr));
+      }
+      if (data.cashMovements) {
+        data.cashMovements.forEach((cm: CashMovement) => storage.saveCashMovement(cm));
+      }
+      return true;
+    } catch (error) {
+      console.error('Error importing data:', error);
+      return false;
+    }
   }
 };
