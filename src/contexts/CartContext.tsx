@@ -180,28 +180,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         return null;
       }
       
-      if (!customerName) {
-        toast({
-          title: "Nome do cliente obrigatório",
-          description: "Informe o nome do cliente para finalizar a venda",
-          variant: "destructive",
-        });
-        return null;
-      }
-      
-      // Verificar se é pagamento em dinheiro e se o valor recebido é suficiente
-      if (paymentMethod === 'cash' && cashAmount !== undefined) {
-        if (cashAmount < cart.subtotal) {
-          toast({
-            title: "Valor insuficiente",
-            description: "O valor recebido é menor que o valor total da venda",
-            variant: "destructive",
-          });
-          return null;
-        }
-      }
-      
-      // Calcular o troco (apenas para pagamento em dinheiro)
+      // Calcular o troco (apenas para pagamento em dinheiro, mas sem verificar valor recebido)
       const change = paymentMethod === 'cash' && cashAmount !== undefined
         ? cashAmount - cart.subtotal
         : undefined;
@@ -230,7 +209,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       
       toast({
         title: "Venda finalizada",
-        description: `Venda finalizada com sucesso para ${customerName}`,
+        description: "Venda finalizada com sucesso",
       });
       
       return sale;

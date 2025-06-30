@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { PaymentMethod, Sale } from '@/types';
 import { formatCurrency } from '@/lib/utils';
@@ -19,18 +18,16 @@ interface CheckoutModalProps {
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ open, onClose, onFinalized }) => {
   const { cart, finalizeSale } = useCart();
-  const [customerName, setCustomerName] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
-  const [cashAmount, setCashAmount] = useState<string>('');
   const [pixQrCode, setPixQrCode] = useState<string>('');
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const sale = await finalizeSale(
-      customerName,
+      'Cliente', // Nome padrão
       paymentMethod,
-      paymentMethod === 'cash' ? parseFloat(cashAmount) : undefined,
+      paymentMethod === 'cash' ? cart.subtotal : undefined, // Valor exato para dinheiro
       paymentMethod === 'pix' ? pixQrCode : undefined
     );
     
@@ -38,10 +35,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ open, onClose, onFinalize
       onFinalized(sale);
     }
   };
-  
-  const change = paymentMethod === 'cash' && Number(cashAmount) > 0
-    ? Number(cashAmount) - cart.subtotal
-    : 0;
   
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -52,18 +45,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ open, onClose, onFinalize
         
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="customerName">Nome do Cliente</Label>
-              <Input 
-                id="customerName"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Digite o nome do cliente"
-                required
-                className="bg-white/40"
-              />
-            </div>
-            
             <div className="space-y-2">
               <Label>Forma de Pagamento</Label>
               <RadioGroup 
@@ -89,29 +70,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ open, onClose, onFinalize
                 </div>
               </RadioGroup>
             </div>
-            
-            {paymentMethod === 'cash' && (
-              <div className="space-y-2">
-                <Label htmlFor="cashAmount">Valor Recebido</Label>
-                <Input 
-                  id="cashAmount"
-                  type="number"
-                  step="0.01"
-                  min={cart.subtotal}
-                  value={cashAmount}
-                  onChange={(e) => setCashAmount(e.target.value)}
-                  placeholder="Digite o valor recebido"
-                  required
-                  className="bg-white/40"
-                />
-                
-                {Number(cashAmount) >= cart.subtotal && (
-                  <div className="mt-2 p-2 border rounded bg-green-50">
-                    <p className="text-sm font-medium text-green-800">Troco: {formatCurrency(change)}</p>
-                  </div>
-                )}
-              </div>
-            )}
 
             {paymentMethod === 'pix' && (
               <div className="space-y-4">

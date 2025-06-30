@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import ProductCard from '@/components/PDV/ProductCard';
@@ -12,13 +11,15 @@ import { useCart } from '@/contexts/CartContext';
 import { Product, Category, Sale, CashRegister } from '@/types';
 import { storage, formatCurrency, subscribeToCashRegister } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, Trash, Package, Coffee, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Trash, Package, Coffee, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 
 const PDVPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
@@ -57,10 +58,15 @@ const PDVPage = () => {
     }
   }, []);
   
-  // Filtrar produtos pela categoria selecionada
-  const filteredProducts = selectedCategory
-    ? products.filter((product) => product.categoryId === selectedCategory)
-    : products;
+  // Filtrar produtos pela categoria selecionada e termo de pesquisa
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory = selectedCategory ? product.categoryId === selectedCategory : true;
+    const matchesSearch = searchTerm 
+      ? product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      : true;
+    return matchesCategory && matchesSearch;
+  });
 
   const handleAddToCart = (product: Product, addOns: any[] = [], observation: string = '') => {
     // Verificar se o caixa está aberto
@@ -152,6 +158,20 @@ const PDVPage = () => {
                 </p>
               </div>
             )}
+
+            {/* Barra de Pesquisa */}
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  type="text"
+                  placeholder="Buscar produtos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-white/60"
+                />
+              </div>
+            </div>
             
             <Tabs 
               value={selectedCategory || ''} 
@@ -216,11 +236,33 @@ const PDVPage = () => {
                   
                   {filteredProducts.length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
-                      Nenhum produto disponível nesta categoria.
+                      {searchTerm ? 'Nenhum produto encontrado para a pesquisa.' : 'Nenhum produto disponível nesta categoria.'}
                     </div>
                   )}
                 </TabsContent>
               ))}
+
+              {/* Aba especial para mostrar resultados da pesquisa quando não há categoria selecionada */}
+              {searchTerm && !selectedCategory && (
+                <TabsContent value="" className="mt-4 relative min-h-[300px]">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredProducts.map((product) => (
+                      <ProductCard 
+                        key={product.id} 
+                        product={product} 
+                        onAddToCart={handleAddToCart}
+                        disabled={!currentCashRegister?.isOpen}
+                      />
+                    ))}
+                  </div>
+                  
+                  {filteredProducts.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Nenhum produto encontrado para a pesquisa "{searchTerm}".
+                    </div>
+                  )}
+                </TabsContent>
+              )}
             </Tabs>
           </div>
         </div>
