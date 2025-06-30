@@ -4,16 +4,24 @@ import { storage } from '@/lib/utils';
 
 export const getAcaiAddOns = () => {
   const products = storage.getProducts();
+  const categories = storage.getCategories();
   
+  // Helper function to get category name by ID
+  const getCategoryName = (categoryId: string): string => {
+    const category = categories.find(c => c.id === categoryId);
+    return category ? category.name.toLowerCase() : '';
+  };
+
   // Complementos (valor 0,00)
-  const complementos = products.filter(p => 
-    p.category?.toLowerCase().includes('complemento') || 
-    p.name.toLowerCase().includes('granola') ||
-    p.name.toLowerCase().includes('aveia') ||
-    p.name.toLowerCase().includes('coco') ||
-    p.name.toLowerCase().includes('castanha') ||
-    p.name.toLowerCase().includes('amendoim')
-  ).map(p => ({
+  const complementos = products.filter(p => {
+    const categoryName = getCategoryName(p.categoryId);
+    return categoryName.includes('complemento') || 
+           p.name.toLowerCase().includes('granola') ||
+           p.name.toLowerCase().includes('aveia') ||
+           p.name.toLowerCase().includes('coco') ||
+           p.name.toLowerCase().includes('castanha') ||
+           p.name.toLowerCase().includes('amendoim');
+  }).map(p => ({
     id: p.id,
     name: p.name,
     price: 0.00, // Preço 0 para complementos
@@ -23,14 +31,15 @@ export const getAcaiAddOns = () => {
   }));
 
   // Coberturas/Caldas (valor 0,00)
-  const coberturas = products.filter(p => 
-    p.category?.toLowerCase().includes('cobertura') || 
-    p.category?.toLowerCase().includes('calda') ||
-    p.name.toLowerCase().includes('chocolate') ||
-    p.name.toLowerCase().includes('morango') ||
-    p.name.toLowerCase().includes('leite condensado') ||
-    p.name.toLowerCase().includes('mel')
-  ).map(p => ({
+  const coberturas = products.filter(p => {
+    const categoryName = getCategoryName(p.categoryId);
+    return categoryName.includes('cobertura') || 
+           categoryName.includes('calda') ||
+           p.name.toLowerCase().includes('chocolate') ||
+           p.name.toLowerCase().includes('morango') ||
+           p.name.toLowerCase().includes('leite condensado') ||
+           p.name.toLowerCase().includes('mel');
+  }).map(p => ({
     id: p.id,
     name: p.name,
     price: 0.00, // Preço 0 para coberturas
@@ -40,15 +49,16 @@ export const getAcaiAddOns = () => {
   }));
 
   // Adicionais (produtos da categoria adicionais)
-  const adicionais = products.filter(p => 
-    p.category?.toLowerCase().includes('adicional') ||
-    p.name.toLowerCase().includes('banana') ||
-    p.name.toLowerCase().includes('morango') ||
-    p.name.toLowerCase().includes('manga') ||
-    p.name.toLowerCase().includes('kiwi') ||
-    p.name.toLowerCase().includes('paçoca') ||
-    p.name.toLowerCase().includes('bis')
-  ).map(p => ({
+  const adicionais = products.filter(p => {
+    const categoryName = getCategoryName(p.categoryId);
+    return categoryName.includes('adicional') ||
+           p.name.toLowerCase().includes('banana') ||
+           p.name.toLowerCase().includes('morango') ||
+           p.name.toLowerCase().includes('manga') ||
+           p.name.toLowerCase().includes('kiwi') ||
+           p.name.toLowerCase().includes('paçoca') ||
+           p.name.toLowerCase().includes('bis');
+  }).map(p => ({
     id: p.id,
     name: p.name,
     price: p.price, // Preço normal para adicionais
