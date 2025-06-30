@@ -84,11 +84,12 @@ const ProductCard = ({ product, onAddToCart, disabled = false }: ProductCardProp
       </Card>
 
       {/* Modal de açaí só aparece para açaiteria */}
-      {shouldShowAcaiModal && storeSettings.businessType === 'acaiteria' && (
+      {shouldShowAcaiModal && (
         <AcaiProductModal
           open={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           product={product}
+          onAddToCart={handleAddToCart}
         />
       )}
     </>

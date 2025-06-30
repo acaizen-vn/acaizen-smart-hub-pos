@@ -1,10 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, Clock, TrendingUp } from 'lucide-react';
 import { CashRegister } from '@/types';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, subscribeToCashRegister } from '@/lib/utils';
 
 interface CashStatusProps {
   cashRegister: CashRegister | null;
@@ -12,7 +12,23 @@ interface CashStatusProps {
   onCloseCash: () => void;
 }
 
-const CashStatus = ({ cashRegister, onOpenCash, onCloseCash }: CashStatusProps) => {
+const CashStatus = ({ cashRegister: initialCashRegister, onOpenCash, onCloseCash }: CashStatusProps) => {
+  const [cashRegister, setCashRegister] = useState<CashRegister | null>(initialCashRegister);
+
+  // Subscribe to cash register changes for real-time sync
+  useEffect(() => {
+    const unsubscribe = subscribeToCashRegister((updatedCashRegister) => {
+      setCashRegister(updatedCashRegister);
+    });
+    
+    return unsubscribe;
+  }, []);
+
+  // Update local state when prop changes
+  useEffect(() => {
+    setCashRegister(initialCashRegister);
+  }, [initialCashRegister]);
+
   if (!cashRegister || !cashRegister.isOpen) {
     return (
       <div className="glass rounded-lg p-4 text-center">

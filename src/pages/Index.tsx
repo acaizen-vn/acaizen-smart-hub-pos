@@ -10,10 +10,10 @@ import OpenCashModal from '@/components/CashRegister/OpenCashModal';
 import CloseCashModal from '@/components/CashRegister/CloseCashModal';
 import { useCart } from '@/contexts/CartContext';
 import { Product, Category, Sale, CashRegister } from '@/types';
-import { storage, formatCurrency } from '@/lib/utils';
+import { storage, formatCurrency, subscribeToCashRegister } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ShoppingCart, Trash, Package, Coffee } from 'lucide-react';
+import { ShoppingCart, Trash, Package, Coffee, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const PDVPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -25,19 +25,32 @@ const PDVPage = () => {
   const [currentCashRegister, setCurrentCashRegister] = useState<CashRegister | null>(null);
   const [isOpenCashModalOpen, setIsOpenCashModalOpen] = useState(false);
   const [isCloseCashModalOpen, setIsCloseCashModalOpen] = useState(false);
+  const [categoryScrollPosition, setCategoryScrollPosition] = useState(0);
   
   const { cart, clearCart, addToCart } = useCart();
   const storeSettings = storage.getStoreSettings();
   
-  // Carregar categorias, produtos e caixa atual
+  // Global cash register synchronization
+  useEffect(() => {
+    // Initial load
+    const cashRegister = storage.getCurrentCashRegister();
+    setCurrentCashRegister(cashRegister);
+    
+    // Subscribe to changes
+    const unsubscribe = subscribeToCashRegister((cashRegister) => {
+      setCurrentCashRegister(cashRegister);
+    });
+    
+    return unsubscribe;
+  }, []);
+  
+  // Carregar categorias e produtos
   useEffect(() => {
     const loadedCategories = storage.getCategories().filter((cat: Category) => cat.active);
     const loadedProducts = storage.getProducts().filter((prod: Product) => prod.active);
-    const cashRegister = storage.getCurrentCashRegister();
     
     setCategories(loadedCategories);
     setProducts(loadedProducts);
-    setCurrentCashRegister(cashRegister);
     
     if (loadedCategories.length > 0) {
       setSelectedCategory(loadedCategories[0].id);
@@ -70,7 +83,6 @@ const PDVPage = () => {
       };
       
       storage.saveCashRegister(updatedCashRegister);
-      setCurrentCashRegister(updatedCashRegister);
     }
 
     setCompletedSale(sale);
@@ -85,6 +97,24 @@ const PDVPage = () => {
   const handleCashClosed = () => {
     setCurrentCashRegister(null);
   };
+
+  // Category navigation functions
+  const scrollCategories = (direction: 'left' | 'right') => {
+    const container = document.querySelector('[data-category-scroll]');
+    if (container) {
+      const scrollAmount = 200;
+      const currentScroll = container.scrollLeft;
+      const newPosition = direction === 'left' 
+        ? Math.max(0, currentScroll - scrollAmount)
+        : currentScroll + scrollAmount;
+      
+      container.scrollTo({ left: newPosition, behavior: 'smooth' });
+      setCategoryScrollPosition(newPosition);
+    }
+  };
+
+  const canScrollLeft = categoryScrollPosition > 0;
+  const canScrollRight = categories.length > 4; // Approximate check
 
   // Definir ícones e textos baseados no tipo de negócio
   const businessTypeConfig = {
@@ -128,17 +158,49 @@ const PDVPage = () => {
               onValueChange={setSelectedCategory}
               className="w-full"
             >
-              <TabsList className="w-full overflow-x-auto flex whitespace-nowrap">
-                {categories.map((category) => (
-                  <TabsTrigger 
-                    key={category.id} 
-                    value={category.id}
-                    className="px-4 flex-shrink-0"
+              {/* Responsive category navigation */}
+              <div className="relative mb-4">
+                {canScrollLeft && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-md h-8 w-8 p-0"
+                    onClick={() => scrollCategories('left')}
                   >
-                    {category.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                )}
+                
+                <div 
+                  data-category-scroll
+                  className="overflow-x-auto scrollbar-hide px-8"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                  <TabsList className="flex w-max min-w-full justify-start gap-2 bg-transparent p-0">
+                    {categories.map((category) => (
+                      <TabsTrigger 
+                        key={category.id} 
+                        value={category.id}
+                        className="flex-shrink-0 px-4 py-2 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                      >
+                        {category.name}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </div>
+                
+                {canScrollRight && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/80 hover:bg-white shadow-md h-8 w-8 p-0"
+                    onClick={() => scrollCategories('right')}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              
               {categories.map((category) => (
                 <TabsContent key={category.id} value={category.id} className="mt-4 relative min-h-[300px]">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
