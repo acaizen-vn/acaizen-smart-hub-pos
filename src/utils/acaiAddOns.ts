@@ -12,15 +12,10 @@ export const getAcaiAddOns = () => {
     return category ? category.name.toLowerCase() : '';
   };
 
-  // Complementos (valor 0,00)
+  // Complementos (valor 0,00) - produtos da categoria "complementos"
   const complementos = products.filter(p => {
     const categoryName = getCategoryName(p.categoryId);
-    return categoryName.includes('complemento') || 
-           p.name.toLowerCase().includes('granola') ||
-           p.name.toLowerCase().includes('aveia') ||
-           p.name.toLowerCase().includes('coco') ||
-           p.name.toLowerCase().includes('castanha') ||
-           p.name.toLowerCase().includes('amendoim');
+    return categoryName.includes('complemento');
   }).map(p => ({
     id: p.id,
     name: p.name,
@@ -30,15 +25,10 @@ export const getAcaiAddOns = () => {
     createdAt: new Date().toISOString()
   }));
 
-  // Coberturas/Caldas (valor 0,00)
+  // Coberturas (valor 0,00) - produtos da categoria "coberturas"
   const coberturas = products.filter(p => {
     const categoryName = getCategoryName(p.categoryId);
-    return categoryName.includes('cobertura') || 
-           categoryName.includes('calda') ||
-           p.name.toLowerCase().includes('chocolate') ||
-           p.name.toLowerCase().includes('morango') ||
-           p.name.toLowerCase().includes('leite condensado') ||
-           p.name.toLowerCase().includes('mel');
+    return categoryName.includes('cobertura');
   }).map(p => ({
     id: p.id,
     name: p.name,
@@ -48,16 +38,10 @@ export const getAcaiAddOns = () => {
     createdAt: new Date().toISOString()
   }));
 
-  // Adicionais (produtos da categoria adicionais)
+  // Adicionais (produtos da categoria "adicionais" com preço normal)
   const adicionais = products.filter(p => {
     const categoryName = getCategoryName(p.categoryId);
-    return categoryName.includes('adicional') ||
-           p.name.toLowerCase().includes('banana') ||
-           p.name.toLowerCase().includes('morango') ||
-           p.name.toLowerCase().includes('manga') ||
-           p.name.toLowerCase().includes('kiwi') ||
-           p.name.toLowerCase().includes('paçoca') ||
-           p.name.toLowerCase().includes('bis');
+    return categoryName.includes('adicional');
   }).map(p => ({
     id: p.id,
     name: p.name,
