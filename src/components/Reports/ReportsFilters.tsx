@@ -21,7 +21,7 @@ export interface ReportFilters {
   minAmount: string;
   maxAmount: string;
   timeOfDay: string;
-  customerName: string;
+  weekDay: string;
 }
 
 interface ReportsFiltersProps {
@@ -47,6 +47,18 @@ const ReportsFilters: React.FC<ReportsFiltersProps> = ({
     value !== '' && value !== undefined && value !== null
   );
 
+  const setQuickFilter = (days: number) => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    onFiltersChange({
+      ...filters,
+      startDate,
+      endDate
+    });
+  };
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -64,6 +76,25 @@ const ReportsFilters: React.FC<ReportsFiltersProps> = ({
         </div>
       </CardHeader>
       <CardContent>
+        {/* Filtros rápidos */}
+        <div className="mb-4">
+          <Label className="text-sm font-medium mb-2 block">Filtros Rápidos</Label>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => setQuickFilter(0)}>
+              Hoje
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setQuickFilter(7)}>
+              Últimos 7 dias
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setQuickFilter(30)}>
+              Últimos 30 dias
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setQuickFilter(90)}>
+              Últimos 90 dias
+            </Button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {/* Período */}
           <div className="space-y-2">
@@ -104,6 +135,26 @@ const ReportsFilters: React.FC<ReportsFiltersProps> = ({
                 />
               </PopoverContent>
             </Popover>
+          </div>
+
+          {/* Dia da Semana */}
+          <div className="space-y-2">
+            <Label>Dia da Semana</Label>
+            <Select value={filters.weekDay} onValueChange={(value) => updateFilter('weekDay', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos os dias" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos os dias</SelectItem>
+                <SelectItem value="0">Domingo</SelectItem>
+                <SelectItem value="1">Segunda-feira</SelectItem>
+                <SelectItem value="2">Terça-feira</SelectItem>
+                <SelectItem value="3">Quarta-feira</SelectItem>
+                <SelectItem value="4">Quinta-feira</SelectItem>
+                <SelectItem value="5">Sexta-feira</SelectItem>
+                <SelectItem value="6">Sábado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Método de Pagamento */}
@@ -198,16 +249,6 @@ const ReportsFilters: React.FC<ReportsFiltersProps> = ({
                 <SelectItem value="dawn">Madrugada (00:00 - 05:59)</SelectItem>
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Nome do Cliente */}
-          <div className="space-y-2">
-            <Label>Nome do Cliente</Label>
-            <Input
-              placeholder="Digite o nome..."
-              value={filters.customerName}
-              onChange={(e) => updateFilter('customerName', e.target.value)}
-            />
           </div>
         </div>
       </CardContent>
